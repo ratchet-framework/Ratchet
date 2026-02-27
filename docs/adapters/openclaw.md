@@ -106,5 +106,6 @@ Read `workspace/context.json`. Verify:
 
 - Cron jobs in OpenClaw use IANA timezone strings (`America/New_York`, not `EST`)
 - Always set `--tz` explicitly — do not rely on defaults
-- Use `127.0.0.1` for local health endpoints, not external IPs
+- **Isolated sessions cannot reach `127.0.0.1`** — isolated cron jobs run sandboxed; localhost resolves to the sandbox, not the host. Do not check local health endpoints from isolated sessions.
+- Canary design: if a cron runs and returns a result, that itself proves the scheduler, agent execution, and delivery channel are all working. No health endpoint check needed.
 - One-shot reminders: use `--delete-after-run` to auto-cleanup
