@@ -1,6 +1,6 @@
 # Ratchet
 
-**AI agents that only get better.**
+**[getratchet.dev](https://getratchet.dev) · AI agents that only get better.**
 
 Ratchet is a lightweight framework for building AI agents that continuously improve themselves — autonomously, over time, with minimal human involvement.
 
