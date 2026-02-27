@@ -1,0 +1,20 @@
+# Secrets and credentials
+*.env
+.env.*
+secrets/
+credentials/
+
+# Personal context — never commit real user data
+context.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs and screenshots
+screenshots/
+*.log

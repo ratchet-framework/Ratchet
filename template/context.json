@@ -1,0 +1,27 @@
+{
+  "location": {
+    "city": "[Your City]",
+    "state": "[Your State/Region]",
+    "country": "[Your Country]",
+    "timezone": "[IANA Timezone, e.g. America/New_York]",
+    "display": "[Your City, State]",
+    "coordinates": { "lat": 0.0, "lon": 0.0 },
+    "updatedAt": "YYYY-MM-DD",
+    "updatedBy": "initial setup"
+  },
+  "travel": {
+    "inProgress": false,
+    "destination": null,
+    "returnDate": null,
+    "homeTimezone": "[IANA Timezone]"
+  },
+  "units": {
+    "temperature": "fahrenheit",
+    "windSpeed": "mph",
+    "precipitation": "inches",
+    "distance": "miles",
+    "pressure": "inHg",
+    "timeFormat": "12h",
+    "dateFormat": "Month DD"
+  }
+}
