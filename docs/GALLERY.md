@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — Tasks (demo)
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-tasks-mobile.png) | ![desktop](screenshots/mission-control-tasks-desktop.png) |
+
 ## Mission Control — Home (demo)
 _2026-02-28_
 
