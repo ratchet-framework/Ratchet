@@ -99,6 +99,13 @@
           "description": "Notices patterns across calendar, email, and behavior. Surfaces risks and opportunities before the human asks.",
           "status": "locked",
           "unlockedAt": null
+        },
+        {
+          "id": "cost-routing",
+          "label": "Cost-aware model routing",
+          "description": "Tasks routed to cheapest model that handles them well. Savings compound over time.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         }
       ]
     },

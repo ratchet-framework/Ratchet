@@ -398,6 +398,7 @@
         <span class="meta-tag" id="framework-tag">Ratchet v0.1</span>
         <span class="meta-tag" id="started-tag">Started —</span>
         <span class="meta-tag" id="total-tag">— / — unlocked</span>
+        <span class="meta-tag" id="cost-tag" style="display:none;color:var(--green);border-color:rgba(63,185,80,0.4)"></span>
       </div>
     </div>
     <div class="overall-progress">
@@ -479,6 +480,27 @@
     document.getElementById('framework-tag').textContent = 'Ratchet v' + agent.version;
     document.getElementById('started-tag').textContent = 'Since ' + agent.started;
     document.getElementById('total-tag').textContent = totalUnlocked + ' / ' + totalAll + ' unlocked';
+
+    // Cost data (optional — only shows if cost-data.json is present)
+    fetch('cost-data.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cd => {
+        const entries = cd.entries || [];
+        const today = new Date();
+        const dow = today.getDay();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+        const weekStr = weekStart.toISOString().slice(0, 10);
+        const weekEntries = entries.filter(e => e.date >= weekStr);
+        const weekCost = weekEntries.reduce((s, e) => s + e.estimatedCostUsd, 0);
+        const naive = weekEntries.length * 0.020;
+        const saved = naive - weekCost;
+        const el = document.getElementById('cost-tag');
+        if (saved > 0.001) {
+          el.textContent = 'Est. saved this week: $' + saved.toFixed(2);
+          el.style.display = 'inline-block';
+        }
+      }).catch(() => {});
 
     // Tabs
     const tabsEl = document.getElementById('tabs');
