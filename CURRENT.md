@@ -5,43 +5,43 @@ It is the single source of truth for in-flight work. If context compacts, start 
 
 ## Active session
 **Date:** 2026-02-28
-**Status:** In progress
+**Status:** Session complete — Aaron asleep
 
-## What's in-flight
+## What shipped tonight
 
-### Mission Control mobile UX
-- [x] Sidebar → hamburger drawer
-- [x] MobileShell component created
-- [x] Dashboard, Cron, System pages updated
-- [x] Tasks page wired to real API + drill-into-detail with context
-- [x] Documents page — MobileShell applied (Issue #6)
-- [x] Memories page — MobileShell applied (Issue #6)
-- [ ] Auto-refresh (60s poll) on documents + memories pages (Issue #7)
+### Mission Control mobile UX (complete)
+- [x] Sidebar → hamburger drawer (MobileShell component)
+- [x] Dashboard, Cron, System, Tasks, Documents, Memories — all MobileShell applied
+- [x] Tasks: drill-to-detail with MEMORY.md context + line numbers
+- [x] Documents: full list restored, tap to read
+- [x] Auto-refresh (60s) on documents, memories, tasks pages
+- [x] GitHub Issues #6 + #7 closed
 
 ### Ratchet framework
-- [x] Cost routing primitive + cost-log tool
-- [x] Cadence primitive + cadence-check tool
-- [x] Notification routing primitive
-- [x] Capability dashboard live at getratchet.dev/dashboard.html
-- [ ] Cadence data: needs Aaron's vehicle mileage + last service dates
-- [x] GitHub Issues: active items mirrored as Issues #6-10
+- [x] Self-documenting builds: `bin/screenshot-commit` — auto screenshots + GALLERY.md
+- [x] All 6 Mission Control pages documented in docs/screenshots/
+- [x] README reframed as engineering project (removed "conventions not code")
+- [x] Session continuity: CURRENT.md live in repo
+- [x] GitHub Issues #6, #7 closed; #8-10 open
+- [x] Capabilities: 26/33 unlocked
 
 ## Next steps (in order)
-1. Apply MobileShell to Documents page
-2. Apply MobileShell to Memories page
-3. Add auto-refresh to Mission Control
-4. Mirror BACKLOG.md active items to GitHub Issues
-5. Populate Cadence with vehicle data (needs Aaron)
+1. Cadence data: Aaron to provide vehicle mileage + last service dates (Issue #8)
+2. Travel detection automation (Issue #9)
+3. Security: prompt injection defense for web content (Issue #10)
+4. Add getratchet.dev/gallery page pulling from docs/GALLERY.md
+5. Wire screenshot-commit into heartbeat for periodic Mission Control documentation
 
-## Key files being worked on
-- `second-brain/src/app/documents/page.tsx`
-- `second-brain/src/app/memories/page.tsx`
-- `second-brain/src/components/MobileShell.tsx` (done)
-- `ratchet/capabilities.json`
+## Key files
+- `bin/screenshot-commit` — screenshot + commit to docs/screenshots/
+- `bin/unlock-capability` — now auto-screenshots on unlock
+- `ratchet/docs/GALLERY.md` — visual build history
+- `ratchet/docs/screenshots/` — 12 screenshots committed (6 pages × mobile + desktop)
+- `second-brain/src/components/MobileShell.tsx` — reusable mobile wrapper
 
-## Resume instructions (for next session after compaction)
-1. Read MEMORY.md → understand full context
-2. Read this file → understand what's in-flight
-3. Read memory/2026-02-28.md → today's session detail
-4. Continue with "Next steps" above
-5. Use `verify-ui` + `screenshot-local.js` to check Mission Control before/after any UI change
+## Resume instructions (after compaction)
+1. Read MEMORY.md
+2. Read this file
+3. Read memory/2026-02-28.md
+4. Everything is in good shape — no broken state, no in-flight code changes
+5. Next task: Cadence data from Aaron (Issue #8)
