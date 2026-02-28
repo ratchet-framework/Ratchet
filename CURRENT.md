@@ -74,7 +74,7 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - [x] Architecture: append-only JSONL; purge uses temp file swap; permanent tier never touched; contradictions flagged only
 
 ## Next steps (in order)
-1. Ratchet Memory Phase 3: semantic embeddings when >500 facts (Issue #19)
+1. ~~Ratchet Memory Phase 3: semantic embeddings when >500 facts (Issue #19)~~ ✅ **Shipped**
 2. INC-007 prevention tasks: update PROCESS.md, add recurrence detection to metrics
 3. Discord integration research + roadmap (Issue TBD)
 4. Second droplet architecture (Issue TBD)

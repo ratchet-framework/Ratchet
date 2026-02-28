@@ -259,7 +259,7 @@ Key insight from all prior art: **everyone converges on three retrieval signals:
 
 ---
 
-### Phase 3 — Make it powerful (after Phase 2 validated)
+### Phase 3 — Make it powerful (after Phase 2 validated) ✅ **Complete**
 
 **Goal:** Replace LLM retrieval with semantic embeddings when fact volume justifies it.
 
@@ -269,6 +269,17 @@ Key insight from all prior art: **everyone converges on three retrieval signals:
 - Cosine similarity retrieval replaces LLM selection
 - Embeddings stored alongside facts.jsonl
 - Platform-agnostic: no vector database
+
+**Implementation:**
+- `bin/memory-embed` — embeds facts using OpenAI `text-embedding-3-small` (1536-dim vectors)
+- TF-IDF fallback: pure Python/stdlib bag-of-words with unit normalization if OpenAI unavailable
+- Embeddings stored in `memory/embeddings.json` as `{fact_id: [float, ...]}`
+- `memory-retrieve` auto-switches to cosine similarity when ≥50 embeddings exist
+- Retrieval score: `cosine_similarity × effective_score` (semantic relevance × importance)
+- `--force-llm` and `--force-embeddings` flags for explicit override
+- `memory-manage` removes embeddings for purged/superseded facts (keeps sync)
+- `memory-extract` auto-calls `memory-embed --all` after extraction (silent by default)
+- Threshold to switch modes: **50 embeddings** (configurable via `EMBEDDING_THRESHOLD`)
 
 **GitHub Issue:** #18
 
@@ -281,11 +292,13 @@ Key insight from all prior art: **everyone converges on three retrieval signals:
 | `bin/memory-extract` | 1 | Extract facts from session transcript |
 | `bin/memory-retrieve` | 1 | Retrieve relevant facts for session start |
 | `bin/memory-manage` | 2 | Weekly decay, promote, purge, contradiction detection |
+| `bin/memory-embed` | 3 | Embed facts via OpenAI or TF-IDF fallback; store in embeddings.json |
 
 **Data files:**
 - `memory/facts-YYYY-Q#.jsonl` — append-only fact store (one file per quarter)
 - `memory/facts-index.json` — tag/category index for fast filtering
 - `memory/memory-log.jsonl` — audit trail: what was promoted, purged, superseded
+- `memory/embeddings.json` — flat dict `{fact_id: [float, ...]}` — embedding vectors per fact
 
 ---
 
@@ -296,5 +309,5 @@ Key insight from all prior art: **everyone converges on three retrieval signals:
 | Extraction accuracy | >90% | >95% | >95% |
 | User notices injected fact | 1+ per week | 3+ per week | — |
 | Facts promoted to MEMORY.md | manual | automatic | automatic |
-| Retrieval relevance | subjective | measurable | cosine score |
+| Retrieval relevance | subjective | measurable | cosine score ✅ |
 | Token budget compliance | hard cap | hard cap | hard cap |
