@@ -323,6 +323,11 @@
       <h3>Platform-agnostic</h3>
       <p>Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back.</p>
     </div>
+    <div class="feature">
+      <div class="feature-icon">🧠</div>
+      <h3>Ratchet Memory <span style="font-size:0.7em;background:#1a3a1a;color:#4caf50;padding:2px 8px;border-radius:4px;vertical-align:middle;">Unlocked</span></h3>
+      <p>Adaptive memory that survives session boundaries. Facts extracted automatically, scored by importance, retrieved by relevance. Three phases: extraction, lifecycle scoring, semantic embeddings. <a href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md" style="color:#4caf50;">Reviewed by Claude Opus →</a></p>
+    </div>
   </div>
 
   <div class="code-section">
@@ -336,8 +341,14 @@
 │   ├── <span class="c-green">README.md</span>      <span class="c-dim"># Postmortem format spec</span>
 │   └── <span class="c-green">INC-001-*.md</span>   <span class="c-dim"># Incident logs</span>
 ├── <span class="c-accent">memory/</span>
-│   └── <span class="c-green">YYYY-MM-DD.md</span>  <span class="c-dim"># Daily logs</span>
-└── <span class="c-accent">bin/</span>               <span class="c-dim"># Utility scripts</span></pre>
+│   ├── <span class="c-green">YYYY-MM-DD.md</span>  <span class="c-dim"># Daily logs</span>
+│   ├── <span class="c-green">facts-YYYY-Q#.jsonl</span>  <span class="c-dim"># Extracted memory facts — scored + timestamped</span>
+│   └── <span class="c-green">embeddings.json</span>  <span class="c-dim"># Semantic vectors for similarity retrieval</span>
+└── <span class="c-accent">bin/</span>               <span class="c-dim"># Utility scripts</span>
+    ├── <span class="c-green">memory-extract</span>  <span class="c-dim"># Extract facts from session transcripts</span>
+    ├── <span class="c-green">memory-retrieve</span>  <span class="c-dim"># Retrieve relevant facts by query</span>
+    ├── <span class="c-green">memory-embed</span>  <span class="c-dim"># Generate/update semantic embeddings</span>
+    └── <span class="c-green">memory-manage</span>  <span class="c-dim"># Decay, promote, deduplicate, purge lifecycle</span></pre>
   </div>
 
   <footer>

@@ -46,6 +46,13 @@
           "unlockedAt": "2026-02-27"
         },
         {
+          "id": "adaptive-memory",
+          "label": "Adaptive Memory",
+          "description": "Facts extracted automatically from sessions, scored by importance, retrieved by relevance. Three phases: extraction, lifecycle scoring, semantic embeddings. Reviewed by Claude Opus.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
+        },
+        {
           "id": "knowledge-base",
           "label": "Domain knowledge base",
           "description": "Deep, structured knowledge of the human's domains: vehicles, work, hobbies, preferences. Always current.",
