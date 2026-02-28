@@ -171,7 +171,7 @@
         {
           "id": "secrets-management",
           "label": "Secrets management",
-          "description": "All credentials stored outside workspace in chmod 600 files. Never committed to git. Never logged.",
+          "description": "All credentials stored securely with restricted permissions. Never committed to git. Never logged.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
