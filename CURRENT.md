@@ -13,9 +13,9 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - [x] Sidebar → hamburger drawer
 - [x] MobileShell component created
 - [x] Dashboard, Cron, System pages updated
-- [x] Tasks page wired to real API
-- [ ] Documents page — MobileShell not yet applied (Issue #6)
-- [ ] Memories page — MobileShell not yet applied (Issue #6)
+- [x] Tasks page wired to real API + drill-into-detail with context
+- [x] Documents page — MobileShell applied (Issue #6)
+- [x] Memories page — MobileShell applied (Issue #6)
 - [ ] Auto-refresh (60s poll) on documents + memories pages (Issue #7)
 
 ### Ratchet framework
