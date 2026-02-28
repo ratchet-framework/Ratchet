@@ -246,6 +246,68 @@ The compute isolation problem becomes acute when Pawl is regularly spawning 3+ c
 
 ---
 
+---
+
+## Worker Droplet — Provisioning
+
+> **Status:** Scripts built — February 2026
+
+### One-command setup
+
+```bash
+export DO_API_TOKEN=your_digitalocean_api_token
+workspace/bin/provision-worker
+```
+
+The script is idempotent — safe to run twice. It won't create a second droplet if `pawl-worker-1` already exists.
+
+**What it does:**
+1. Validates DO API token and SSH key from your DigitalOcean account
+2. Creates `pawl-worker-1` in nyc3 (`s-1vcpu-2gb`, Ubuntu 22.04)
+3. Waits for droplet to become active and SSH-ready
+4. Installs: Node.js 22, OpenClaw, git, python3
+5. Configures OpenClaw in headless/worker mode (no Telegram, cron-only)
+6. Clones the ratchet workspace repo (if GitHub credentials are present)
+7. Creates a systemd service (`openclaw-worker`) — not auto-started, for your review
+8. Adds a heartbeat cron that writes to `worker/HEARTBEAT.md` every 5 minutes
+9. Prints a migration checklist for cron jobs
+
+**Prerequisites Aaron needs to provide:**
+- `DO_API_TOKEN` — DigitalOcean personal access token (Manage → API)
+- SSH key uploaded to DigitalOcean (account → Security)
+- Optional: `/root/.openclaw/secrets/pawl-github.env` with `GITHUB_TOKEN`, `GITHUB_USER`, `GITHUB_EMAIL`, `GITHUB_REPO` for automatic workspace clone
+
+### Cost
+
+**$12/month** (`s-1vcpu-2gb` in nyc3).
+
+| Main droplet | Worker droplet |
+|---|---|
+| Live Telegram conversation | Long-running sub-agents |
+| Heartbeat / coordination | Weekly review generation |
+| Short-lived interactive sub-agents | GitHub commit/push workflows |
+| Memory management (MEMORY.md, CURRENT.md) | Research and synthesis tasks |
+| Orchestration / spawning | Publishing pipeline |
+
+### Check worker health
+
+```bash
+DO_API_TOKEN=<token> workspace/bin/worker-status
+```
+
+Reports: droplet status, SSH reachability, OpenClaw version, systemd service state, active crontab, heartbeat freshness, task queue depth.
+
+### Coordination model
+
+See **Option B** above for the full design. Short version:
+
+- Main session writes tasks to `worker/QUEUE.md`, pushes to git
+- Worker polls git, claims tasks, writes results to `worker/RESULTS/<task-id>.md`
+- Heartbeat written every 5 min to `worker/HEARTBEAT.md`
+- Main session reads results on next heartbeat cycle
+
+---
+
 ## GitHub Issues
 
 See issues filed in ratchet-framework/Ratchet for implementation tracking.
