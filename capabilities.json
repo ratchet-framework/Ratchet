@@ -171,37 +171,30 @@
         {
           "id": "secrets-management",
           "label": "Secrets management",
-          "description": "All credentials stored securely with restricted permissions. Never committed to git. Never logged.",
+          "description": "Credentials and sensitive data protected. Never logged or exposed.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
         {
           "id": "prompt-injection-defense",
           "label": "Prompt injection defense",
-          "description": "Email and calendar content treated as untrusted data. Delimiter wrapping, sender allowlisting, no autonomous action from external content.",
+          "description": "External data validated and sandboxed. Never executed as instructions.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
         },
         {
           "id": "sender-allowlist",
           "label": "Sender allowlist",
-          "description": "Only process email content from known trusted senders. Unknown senders get metadata-only treatment.",
+          "description": "Known senders trusted. Unknown sources validated before processing.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
         },
         {
           "id": "sandboxed-processing",
           "label": "Sandboxed processing",
-          "description": "External content parsed in isolated sessions with restricted prompts and no tool access.",
+          "description": "External content processed in isolation with restricted context.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
-        },
-        {
-          "id": "audit-trail",
-          "label": "Audit trail",
-          "description": "Every autonomous action logged with timestamp, context, and outcome. Full accountability for background work.",
-          "status": "locked",
-          "unlockedAt": null
         }
       ]
     },
