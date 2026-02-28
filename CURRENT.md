@@ -53,11 +53,23 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - Outback rear rotors: order before scheduling brake job
 - Tacoma service day: waiting on weather + calendar
 
+## Ratchet Memory Phase 1 — SHIPPED ✅
+- [x] bin/memory-extract: extracts facts from session transcripts via LLM (isolated call)
+- [x] bin/memory-retrieve: retrieves top relevant facts for session start
+- [x] session-start: wired — shows top facts at session start
+- [x] pre-compaction: wired — reminds to run memory-extract after session ends
+- [x] Tested on 2026-02-28.md: 25 facts extracted, retrieval working
+- [x] facts-2026-Q1.jsonl: 25 facts seeded
+- Schema: id, content, category, tags, importance, tier, created, source_session, last_referenced, reference_count, supersedes, superseded_by, promoted, source_trust
+- LLM calls use direct Anthropic API (urllib, no external deps)
+- Next: Phase 2 (decay/promote/manage — Issue #17 → close and open #18)
+
 ## Next steps (in order)
 1. Answer process enforcement question (Aaron)
 2. Order WRX filters 15208AA170
 3. Order Outback rear rotors
 4. Fix Google OAuth when ready (Cloud Console)
+5. Run memory-extract regularly after sessions to build fact base
 5. Populate demo fixtures for Cadence in Mission Control
 6. Screenshot getratchet.dev cadence card when browser available
 
