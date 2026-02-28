@@ -66,13 +66,19 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - Google Calendar: OAuth client disabled (INC-006)
 - Tacoma service: waiting on weather
 
+## Ratchet Memory Phase 2 — SHIPPED (2026-02-28)
+- [x] bin/memory-manage: weekly lifecycle manager (decay, promote, purge, contradiction detection)
+- [x] bin/memory-extract: tier detection (permanent/transient keywords), importance modifiers (+0.2 remember, +0.15 action-required)
+- [x] bin/memory-retrieve: recency boost already present (e^(-0.023×days)), permanent/transient/superseded handling verified
+- [x] Friday review cron updated to run memory-manage and include 🧠 Memory section in weekly report
+- [x] Architecture: append-only JSONL; purge uses temp file swap; permanent tier never touched; contradictions flagged only
+
 ## Next steps (in order)
-1. **COMPACTION TEST** — new session reads this + memory facts, proves continuity
-2. Ratchet Memory Phase 2: scoring lifecycle, decay, contradiction handling (Issue #18)
-3. INC-007 prevention tasks: update PROCESS.md, add recurrence detection to metrics
-4. Discord integration research + roadmap (Issue TBD)
-5. Second droplet architecture (Issue TBD)
-6. Screenshot session-continuity + cadence cards for getratchet.dev
+1. Ratchet Memory Phase 3: semantic embeddings when >500 facts (Issue #19)
+2. INC-007 prevention tasks: update PROCESS.md, add recurrence detection to metrics
+3. Discord integration research + roadmap (Issue TBD)
+4. Second droplet architecture (Issue TBD)
+5. Screenshot session-continuity + cadence cards for getratchet.dev
 
 ## Resume instructions (after compaction)
 1. Run `python3 workspace/bin/session-start` — reads this file, surfaces open decisions, loads memory facts
