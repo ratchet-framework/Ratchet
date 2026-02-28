@@ -1,5 +1,12 @@
 # Gallery
 
+## Capability unlocked: Self-documenting builds
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/capability-self-documenting-builds-unlock-mobile.png) | ![desktop](screenshots/capability-self-documenting-builds-unlock-desktop.png) |
+
 ## Mission Control — System
 _2026-02-28_
 
