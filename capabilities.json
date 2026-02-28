@@ -113,6 +113,13 @@
           "description": "Work survives compaction. CURRENT.md in GitHub tracks in-flight state. Next session resumes autonomously.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
+        },
+        {
+          "id": "self-documenting-builds",
+          "label": "Self-documenting builds",
+          "description": "When Pawl ships UI changes, it screenshots and commits visual proof to the repo automatically. GALLERY.md tracks the full visual history.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
         }
       ]
     },
