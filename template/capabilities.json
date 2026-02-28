@@ -1,0 +1,138 @@
+{
+  "agent": {
+    "name": "[Agent Name]",
+    "started": "YYYY-MM-DD",
+    "framework": "Ratchet",
+    "version": "0.1"
+  },
+  "branches": {
+    "core": {
+      "label": "Core",
+      "icon": "🧠",
+      "capabilities": [
+        {
+          "id": "memory-system",
+          "label": "Memory system",
+          "description": "Long-term curated memory (MEMORY.md) + daily session logs.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "incident-loop",
+          "label": "Incident loop",
+          "description": "Every failure gets a postmortem. Root cause, blast radius, prevention tasks.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "context-system",
+          "label": "Context system",
+          "description": "Authoritative state file for location, timezone, and preferences.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "daily-logging",
+          "label": "Daily logging",
+          "description": "Structured daily memory files that feed the weekly review.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "autonomy": {
+      "label": "Autonomy",
+      "icon": "🔁",
+      "capabilities": [
+        {
+          "id": "heartbeat-monitoring",
+          "label": "Heartbeat monitoring",
+          "description": "Recurring health checks. System status, incident detection — autonomous.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "background-backlog",
+          "label": "Background backlog",
+          "description": "Self-directed work queue. The agent works through tasks between sessions.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "weekly-self-review",
+          "label": "Weekly self-review",
+          "description": "Synthesizes the week, updates long-term memory, reports to the human.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "integrations": {
+      "label": "Integrations",
+      "icon": "📡",
+      "capabilities": [
+        {
+          "id": "primary-channel",
+          "label": "[Primary channel]",
+          "description": "Main communication channel with the human.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "email-read",
+          "label": "Email (read)",
+          "description": "Monitor inbox for incoming messages and action items.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "calendar-read",
+          "label": "Calendar (read)",
+          "description": "Read schedule, feed briefings, enable meeting prep.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "security": {
+      "label": "Security",
+      "icon": "🔒",
+      "capabilities": [
+        {
+          "id": "secrets-management",
+          "label": "Secrets management",
+          "description": "All credentials stored securely, never committed to git.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "prompt-injection-defense",
+          "label": "Prompt injection defense",
+          "description": "External content treated as untrusted data. Never executed as instructions.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "infrastructure": {
+      "label": "Infrastructure",
+      "icon": "🌐",
+      "capabilities": [
+        {
+          "id": "agent-identity",
+          "label": "Agent identity",
+          "description": "The agent has a name and consistent identity across platforms.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "capability-dashboard",
+          "label": "Capability dashboard",
+          "description": "Live visualization of the agent's progress.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    }
+  }
+}

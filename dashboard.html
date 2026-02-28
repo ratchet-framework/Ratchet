@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pawl — Capability Dashboard · Ratchet</title>
+  <meta name="description" content="Live capability progression for Pawl, the Ratchet reference agent.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --border-bright: #484f58;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --dim: #484f58;
+      --accent: #f78166;
+      --accent2: #79c0ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --purple: #bc8cff;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Nav */
+    .nav-wrap { border-bottom: 1px solid var(--border); }
+    nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-family: var(--mono); font-size: 1rem; color: var(--text); font-weight: 600; }
+    .logo span { color: var(--accent); }
+    nav a { color: var(--muted); font-size: 0.875rem; margin-left: 1.5rem; }
+    nav a:hover { color: var(--text); text-decoration: none; }
+
+    /* Header */
+    .header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .agent-info h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .agent-info h1 span { color: var(--accent); }
+
+    .agent-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.6rem;
+      border-radius: 2rem;
+    }
+
+    /* Overall progress */
+    .overall-progress {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .progress-stat {
+      text-align: center;
+    }
+
+    .progress-stat .number {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--green);
+      font-family: var(--mono);
+    }
+
+    .progress-stat .number.locked { color: var(--dim); }
+
+    .progress-stat .label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .progress-bar-wrap {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), #58a6ff);
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* Branch tabs */
+    .tabs {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 0;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 6px 6px 0 0;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.15s;
+      position: relative;
+      bottom: -1px;
+    }
+
+    .tab:hover { color: var(--text); }
+
+    .tab.active {
+      color: var(--text);
+      background: var(--surface);
+      border-color: var(--border);
+      border-bottom-color: var(--surface);
+    }
+
+    .tab-icon { margin-right: 0.4rem; }
+
+    .tab-progress {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      margin-left: 0.4rem;
+      color: var(--muted);
+    }
+
+    /* Content */
+    .content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .branch-panel { display: none; }
+    .branch-panel.active { display: block; }
+
+    .branch-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .branch-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .branch-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .branch-bar-inner {
+      width: 120px;
+      height: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .branch-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+    }
+
+    /* Capability grid */
+    .capability-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 0.875rem;
+    }
+
+    /* Capability card */
+    .cap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem;
+      position: relative;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .cap-card.unlocked {
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px rgba(63, 185, 80, 0.1), 0 2px 12px rgba(63, 185, 80, 0.08);
+    }
+
+    .cap-card.unlocked:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 1px rgba(63, 185, 80, 0.2), 0 4px 16px rgba(63, 185, 80, 0.12);
+    }
+
+    .cap-card.locked {
+      opacity: 0.5;
+    }
+
+    .cap-card.locked:hover {
+      opacity: 0.65;
+    }
+
+    .cap-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .cap-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .cap-card.locked .cap-label { color: var(--muted); }
+
+    .cap-status-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+
+    .cap-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+
+    .cap-card.locked .cap-desc { color: var(--dim); }
+
+    .cap-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cap-date {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--green);
+    }
+
+    .cap-locked-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--dim);
+    }
+
+    .cap-badge {
+      font-size: 0.65rem;
+      background: rgba(63, 185, 80, 0.1);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      color: var(--green);
+      padding: 0.15rem 0.5rem;
+      border-radius: 2rem;
+      font-family: var(--mono);
+    }
+
+    /* Unlock toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(63,185,80,0.2);
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      z-index: 999;
+      animation: slideIn 0.3s ease;
+      max-width: 340px;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(1rem); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    #toast .toast-icon { font-size: 1.25rem; }
+    #toast .toast-text strong { display: block; color: var(--green); margin-bottom: 0.15rem; }
+    #toast .toast-text span { color: var(--muted); font-size: 0.8rem; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 3rem;
+    }
+
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="nav-wrap">
+  <nav>
+    <span class="logo">🔩 <span>ratchet</span></span>
+    <div>
+      <a href="/">Home</a>
+      <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+    </div>
+  </nav>
+</div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="agent-info">
+      <h1>🔩 <span>Pawl</span> — Capability Dashboard</h1>
+      <div class="agent-meta">
+        <span class="meta-tag" id="framework-tag">Ratchet v0.1</span>
+        <span class="meta-tag" id="started-tag">Started —</span>
+        <span class="meta-tag" id="total-tag">— / — unlocked</span>
+      </div>
+    </div>
+    <div class="overall-progress">
+      <div class="progress-stat">
+        <div class="number" id="unlocked-count">—</div>
+        <div class="label">Unlocked</div>
+      </div>
+      <div class="progress-stat">
+        <div class="number locked" id="locked-count">—</div>
+        <div class="label">Locked</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-label">
+          <span>Overall progress</span>
+          <span id="pct-label">—%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="overall-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="content" id="content"></div>
+
+<div id="toast">
+  <div class="toast-icon">🔩</div>
+  <div class="toast-text">
+    <strong id="toast-title"></strong>
+    <span id="toast-desc"></span>
+  </div>
+</div>
+
+<footer>
+  <p>
+    <a href="https://github.com/ratchet-framework/Ratchet">Ratchet framework</a> ·
+    Managed autonomously by <a href="https://github.com/pawlratchet">Pawl</a> ·
+    <a href="https://getratchet.dev">getratchet.dev</a>
+  </p>
+</footer>
+
+<script>
+  const BRANCH_COLORS = {
+    core: '#bc8cff',
+    autonomy: '#79c0ff',
+    integrations: '#3fb950',
+    security: '#f78166',
+    infrastructure: '#d29922'
+  };
+
+  async function load() {
+    const resp = await fetch('capabilities.json?t=' + Date.now());
+    const data = await resp.json();
+    render(data);
+  }
+
+  function render(data) {
+    const branches = data.branches;
+    const agent = data.agent;
+    const branchKeys = Object.keys(branches);
+
+    // Totals
+    let totalUnlocked = 0, totalAll = 0;
+    branchKeys.forEach(k => {
+      branches[k].capabilities.forEach(c => {
+        totalAll++;
+        if (c.status === 'unlocked') totalUnlocked++;
+      });
+    });
+
+    const pct = Math.round((totalUnlocked / totalAll) * 100);
+    document.getElementById('unlocked-count').textContent = totalUnlocked;
+    document.getElementById('locked-count').textContent = totalAll - totalUnlocked;
+    document.getElementById('pct-label').textContent = pct + '%';
+    document.getElementById('overall-fill').style.width = pct + '%';
+    document.getElementById('framework-tag').textContent = 'Ratchet v' + agent.version;
+    document.getElementById('started-tag').textContent = 'Since ' + agent.started;
+    document.getElementById('total-tag').textContent = totalUnlocked + ' / ' + totalAll + ' unlocked';
+
+    // Tabs
+    const tabsEl = document.getElementById('tabs');
+    const contentEl = document.getElementById('content');
+    tabsEl.innerHTML = '';
+    contentEl.innerHTML = '';
+
+    branchKeys.forEach((key, i) => {
+      const branch = branches[key];
+      const unlocked = branch.capabilities.filter(c => c.status === 'unlocked').length;
+      const total = branch.capabilities.length;
+      const color = BRANCH_COLORS[key] || '#8b949e';
+
+      // Tab
+      const tab = document.createElement('div');
+      tab.className = 'tab' + (i === 0 ? ' active' : '');
+      tab.dataset.branch = key;
+      tab.innerHTML = `<span class="tab-icon">${branch.icon}</span>${branch.label}<span class="tab-progress">${unlocked}/${total}</span>`;
+      tab.addEventListener('click', () => switchTab(key));
+      tabsEl.appendChild(tab);
+
+      // Panel
+      const panel = document.createElement('div');
+      panel.className = 'branch-panel' + (i === 0 ? ' active' : '');
+      panel.id = 'panel-' + key;
+
+      const bPct = Math.round((unlocked / total) * 100);
+      panel.innerHTML = `
+        <div class="branch-header">
+          <div class="branch-title">${branch.icon} ${branch.label}</div>
+          <div class="branch-bar">
+            <span>${unlocked} of ${total} unlocked</span>
+            <div class="branch-bar-inner">
+              <div class="branch-bar-fill" style="width:${bPct}%;background:${color}"></div>
+            </div>
+            <span>${bPct}%</span>
+          </div>
+        </div>
+        <div class="capability-grid">
+          ${branch.capabilities.map(c => capCard(c, color)).join('')}
+        </div>
+      `;
+      contentEl.appendChild(panel);
+    });
+
+    // Unlock toast for most recently unlocked
+    const allCaps = branchKeys.flatMap(k => branches[k].capabilities.filter(c => c.status === 'unlocked'));
+    allCaps.sort((a, b) => (b.unlockedAt || '').localeCompare(a.unlockedAt || ''));
+    if (allCaps.length > 0) {
+      setTimeout(() => showToast(allCaps[0]), 800);
+    }
+  }
+
+  function capCard(cap, color) {
+    const unlocked = cap.status === 'unlocked';
+    const icon = unlocked ? '✅' : '🔒';
+    const footer = unlocked
+      ? `<span class="cap-date">Unlocked ${cap.unlockedAt}</span><span class="cap-badge">achieved</span>`
+      : `<span class="cap-locked-label">not yet unlocked</span>`;
+
+    return `
+      <div class="cap-card ${cap.status}" style="${unlocked ? '--card-color:' + color : ''}">
+        <div class="cap-card-header">
+          <span class="cap-label">${cap.label}</span>
+          <span class="cap-status-icon">${icon}</span>
+        </div>
+        <p class="cap-desc">${cap.description}</p>
+        <div class="cap-footer">${footer}</div>
+      </div>
+    `;
+  }
+
+  function switchTab(key) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.branch === key));
+    document.querySelectorAll('.branch-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + key));
+  }
+
+  function showToast(cap) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-title').textContent = '🔩 Capability unlocked: ' + cap.label;
+    document.getElementById('toast-desc').textContent = cap.unlockedAt;
+    toast.style.display = 'flex';
+    setTimeout(() => { toast.style.display = 'none'; }, 5000);
+  }
+
+  load();
+</script>
+</body>
+</html>

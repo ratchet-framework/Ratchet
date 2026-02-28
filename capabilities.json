@@ -1,0 +1,257 @@
+{
+  "agent": {
+    "name": "Pawl",
+    "started": "2026-02-27",
+    "framework": "Ratchet",
+    "version": "0.1"
+  },
+  "branches": {
+    "core": {
+      "label": "Core",
+      "icon": "🧠",
+      "capabilities": [
+        {
+          "id": "memory-system",
+          "label": "Memory system",
+          "description": "Long-term curated memory (MEMORY.md) + daily session logs. The agent wakes up fresh but never loses context.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "incident-loop",
+          "label": "Incident loop",
+          "description": "Every failure gets a postmortem. Root cause, blast radius, prevention tasks. Fixed means the class of problem is addressed.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "context-system",
+          "label": "Context system",
+          "description": "Authoritative state file (context.json) for location, timezone, and preferences. Never assumed — always checked.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "daily-logging",
+          "label": "Daily logging",
+          "description": "Structured daily memory files feed the weekly review. Every session is documented for future synthesis.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "intent-verification",
+          "label": "Intent verification",
+          "description": "Before creating any time-sensitive task, the agent verifies timezone, units, location, and preferences against context.json.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "knowledge-base",
+          "label": "Domain knowledge base",
+          "description": "Deep, structured knowledge of the human's domains: vehicles, work, hobbies, preferences. Always current.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "autonomy": {
+      "label": "Autonomy",
+      "icon": "🔁",
+      "capabilities": [
+        {
+          "id": "heartbeat-monitoring",
+          "label": "Heartbeat monitoring",
+          "description": "Recurring health checks every 30 minutes. System status, service health, incident detection — all autonomous.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "background-backlog",
+          "label": "Background backlog",
+          "description": "Self-directed work queue (BACKLOG.md). P1s execute immediately. The agent works through P2/P3 items between sessions.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "weekly-self-review",
+          "label": "Weekly self-review",
+          "description": "Every Friday, the agent synthesizes the week's incidents and backlog, updates long-term memory, and reports to the human.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "self-healing",
+          "label": "Self-healing",
+          "description": "INC-002: canary false failures detected and resolved autonomously, without human involvement. The ratchet clicked.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "travel-detection",
+          "label": "Travel detection",
+          "description": "Automatically detects when the human departs or returns from travel, updates context.json, and audits all time-sensitive configs.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "proactive-intelligence",
+          "label": "Proactive intelligence",
+          "description": "Notices patterns across calendar, email, and behavior. Surfaces risks and opportunities before the human asks.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "integrations": {
+      "label": "Integrations",
+      "icon": "📡",
+      "capabilities": [
+        {
+          "id": "telegram",
+          "label": "Telegram",
+          "description": "Primary communication channel. Bidirectional messaging, reminders, alerts, and rich formatted updates.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "github",
+          "label": "GitHub (full access)",
+          "description": "SSH push access + API management as Pawl (pawlratchet). Commits, issues, repo settings — all autonomous.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "email-read",
+          "label": "Email (read)",
+          "description": "IMAP access to Pawl's Gmail inbox. Monitors for incoming messages, receipts, and action items.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "calendar-read",
+          "label": "Calendar (read)",
+          "description": "Google Calendar API access. Reads today's schedule, feeds morning briefing, enables meeting prep.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "email-send",
+          "label": "Email (send)",
+          "description": "Outbound email from Pawl's address. Blocked by DigitalOcean SMTP firewall — requires unblock request or relay service.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "home-automation",
+          "label": "Home automation",
+          "description": "Control smart home devices — lights, thermostat, locks. Trigger scenes based on calendar, location, or time.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "voice-tts",
+          "label": "Voice / TTS",
+          "description": "Text-to-speech output for stories, briefings, and ambient announcements through home speakers.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "vehicle-tracking",
+          "label": "Vehicle tracking",
+          "description": "Digital maintenance log for all three vehicles. Tracks service history, calculates due dates, fires reminders automatically.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "security": {
+      "label": "Security",
+      "icon": "🔒",
+      "capabilities": [
+        {
+          "id": "secrets-management",
+          "label": "Secrets management",
+          "description": "All credentials stored outside workspace in chmod 600 files. Never committed to git. Never logged.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "prompt-injection-defense",
+          "label": "Prompt injection defense",
+          "description": "Email and calendar content treated as untrusted data. Delimiter wrapping, sender allowlisting, no autonomous action from external content.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "sender-allowlist",
+          "label": "Sender allowlist",
+          "description": "Only process email content from known trusted senders. Unknown senders get metadata-only treatment.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "sandboxed-processing",
+          "label": "Sandboxed processing",
+          "description": "External content parsed in isolated sessions with restricted prompts and no tool access.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "audit-trail",
+          "label": "Audit trail",
+          "description": "Every autonomous action logged with timestamp, context, and outcome. Full accountability for background work.",
+          "status": "locked",
+          "unlockedAt": null
+        }
+      ]
+    },
+    "infrastructure": {
+      "label": "Infrastructure",
+      "icon": "🌐",
+      "capabilities": [
+        {
+          "id": "agent-identity",
+          "label": "Agent identity",
+          "description": "Pawl has a name, Gmail account, GitHub account, and SSH keys. A real identity across platforms.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "open-source-repo",
+          "label": "Open source repo",
+          "description": "Ratchet framework published at github.com/ratchet-framework/Ratchet. Managed autonomously by Pawl.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "landing-page",
+          "label": "Landing page",
+          "description": "getratchet.dev — live, HTTPS, GitHub Pages. The framework has a public home.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "capability-dashboard",
+          "label": "Capability dashboard",
+          "description": "This page. A living visualization of the agent's progress — Minecraft-style advancement tree, updated on every unlock.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
+        },
+        {
+          "id": "ui-verification",
+          "label": "UI verification",
+          "description": "Screenshot and visually verify browser-rendered results without requiring the human to take screenshots.",
+          "status": "locked",
+          "unlockedAt": null
+        },
+        {
+          "id": "custom-domain",
+          "label": "Custom domain",
+          "description": "getratchet.dev registered and wired. DNS configured, TLS provisioned, ratchet.ai reserved for post-funding.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-27"
+        }
+      ]
+    }
+  }
+}
