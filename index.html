@@ -11,14 +11,19 @@
     :root {
       --bg: #0d1117;
       --surface: #161b22;
+      --surface2: #1c2128;
       --border: #30363d;
+      --border-subtle: #21262d;
       --text: #e6edf3;
       --muted: #8b949e;
+      --muted2: #6e7681;
       --accent: #f78166;
       --accent2: #79c0ff;
       --green: #3fb950;
+      --yellow: #e3b341;
+      --purple: #d2a8ff;
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      --mono: 'SF Mono', 'Fira Code', monospace;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
     }
 
     body {
@@ -33,197 +38,534 @@
     a { color: var(--accent2); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Nav */
-    nav {
+    .container { max-width: 960px; margin: 0 auto; padding: 0 2rem; }
+    .container-wide { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+    /* ── Nav ── */
+    .nav-wrap {
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    nav {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0.9rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      max-width: 960px;
-      margin: 0 auto;
     }
 
     .logo {
       font-family: var(--mono);
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: var(--text);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .logo span { color: var(--accent); }
+    .logo-sub { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-left: 0.25rem; }
 
-    nav a {
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a {
       color: var(--muted);
-      font-size: 0.9rem;
-      margin-left: 1.5rem;
+      font-size: 0.875rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface); text-decoration: none; }
+    .nav-links .btn-nav {
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    .nav-links .btn-nav:hover { background: #ff9b85; color: #0d1117; }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 6rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
 
-    nav a:hover { color: var(--text); text-decoration: none; }
-
-    /* Hero */
-    .hero {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 5rem 2rem 4rem;
-      text-align: center;
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(247,129,102,0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .badge {
-      display: inline-block;
-      background: rgba(247, 129, 102, 0.1);
-      border: 1px solid rgba(247, 129, 102, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(247, 129, 102, 0.08);
+      border: 1px solid rgba(247, 129, 102, 0.25);
       color: var(--accent);
       font-family: var(--mono);
-      font-size: 0.75rem;
-      padding: 0.25rem 0.75rem;
+      font-size: 0.72rem;
+      padding: 0.3rem 0.85rem;
       border-radius: 2rem;
-      margin-bottom: 2rem;
+      margin-bottom: 2.25rem;
       letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
+    .badge::before { content: '●'; font-size: 0.6rem; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
     h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: -1px;
+      font-size: clamp(2.2rem, 5.5vw, 3.75rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
       margin-bottom: 1.5rem;
       color: var(--text);
     }
 
     h1 em {
       font-style: normal;
-      color: var(--accent);
+      background: linear-gradient(135deg, var(--accent) 0%, #ff9b85 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .tagline {
-      font-size: 1.15rem;
+    .hero-sub {
+      font-size: 1.1rem;
       color: var(--muted);
-      max-width: 560px;
-      margin: 0 auto 2.5rem;
+      max-width: 600px;
+      margin: 0 auto 1rem;
+      line-height: 1.7;
+    }
+
+    .hero-problem {
+      font-size: 0.95rem;
+      color: var(--muted2);
+      max-width: 520px;
+      margin: 0 auto 2.75rem;
+      padding: 0.85rem 1.25rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      background: var(--surface);
+      font-style: italic;
     }
 
     .cta-group {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       justify-content: center;
       flex-wrap: wrap;
+      margin-bottom: 3.5rem;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.65rem 1.4rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      font-weight: 500;
-      transition: opacity 0.15s;
-    }
-
-    .btn:hover { opacity: 0.85; text-decoration: none; }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #0d1117;
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    /* Loop diagram */
-    .loop {
-      max-width: 760px;
-      margin: 4rem auto;
-      padding: 0 2rem;
-    }
-
-    .loop-steps {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      flex-wrap: wrap;
-      font-family: var(--mono);
-      font-size: 0.8rem;
-    }
-
-    .loop-step {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 0.5rem 0.85rem;
-      border-radius: 6px;
-      color: var(--text);
-      white-space: nowrap;
-    }
-
-    .loop-arrow {
-      color: var(--accent);
-      padding: 0 0.25rem;
-      font-size: 1rem;
-    }
-
-    /* Features */
-    .features {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 2rem 5rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.25rem;
-    }
-
-    .feature {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      padding: 0.7rem 1.5rem;
       border-radius: 8px;
-      padding: 1.5rem;
-    }
-
-    .feature-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .feature h3 {
       font-size: 0.95rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: var(--text);
+      transition: all 0.15s;
+      cursor: pointer;
     }
 
-    .feature p {
-      font-size: 0.875rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
+    .btn:hover { text-decoration: none; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #0d1117; box-shadow: 0 4px 16px rgba(247,129,102,0.25); }
+    .btn-primary:hover { background: #ff9b85; box-shadow: 0 6px 20px rgba(247,129,102,0.35); }
+    .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--muted2); background: var(--surface2); }
 
-    /* Code block */
-    .code-section {
+    /* ── Live Stats ── */
+    .stats-bar {
       max-width: 760px;
       margin: 0 auto 5rem;
       padding: 0 2rem;
     }
 
-    .code-section h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1rem;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .stat {
+      background: var(--surface);
+      padding: 1.25rem 1rem;
       text-align: center;
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue { color: var(--accent2); }
+    .stat-value.orange { color: var(--accent); }
+    .stat-value.purple { color: var(--purple); }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Section headings ── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.75px;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── How it works ── */
+    .how-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .steps {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      position: relative;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem 1.5rem;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .step:hover { border-color: var(--accent); }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .step-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.25px;
+    }
+
+    .step p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .step-connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.25rem;
+      padding-top: 2.5rem;
+    }
+
+    .loop-tag {
+      text-align: center;
+      margin-top: 2rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .loop-tag strong { color: var(--accent); }
+
+    /* ── Features / Capabilities ── */
+    .capabilities-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .cap-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .cap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .cap-card:hover { border-color: var(--border-subtle); transform: translateY(-2px); }
+    .cap-card.unlocked { border-color: rgba(63, 185, 80, 0.25); }
+    .cap-card.unlocked:hover { border-color: rgba(63, 185, 80, 0.5); }
+
+    .cap-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .cap-icon { font-size: 1.5rem; }
+
+    .cap-badge {
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge-unlocked { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.25); }
+    .badge-locked { background: rgba(139,148,158,0.1); color: var(--muted2); border: 1px solid var(--border-subtle); }
+
+    .cap-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.25px;
+    }
+
+    .cap-card p {
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .cap-card .cap-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--green);
+    }
+
+    /* ── Opus Quote ── */
+    .opus-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .opus-card {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--purple);
+      border-radius: 12px;
+      padding: 2rem 2.25rem;
+    }
+
+    .opus-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--purple);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    blockquote {
+      font-size: 1.05rem;
+      color: var(--text);
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    blockquote strong {
+      font-style: normal;
+      color: var(--purple);
+    }
+
+    .opus-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Philosophy ── */
+    .philosophy-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .philosophy-card {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .philosophy-card .ratchet-mantra {
+      font-size: 1.15rem;
+      color: var(--text);
+      line-height: 2;
+      margin-bottom: 1.5rem;
+    }
+
+    .philosophy-card .ratchet-mantra span {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .philosophy-steps {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .phil-step {
+      background: rgba(247,129,102,0.08);
+      border: 1px solid rgba(247,129,102,0.2);
+      color: var(--accent);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+    }
+
+    .phil-arrow { color: var(--muted2); }
+
+    /* ── Comparison table ── */
+    .compare-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .table-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      background: var(--surface2);
+      padding: 0.9rem 1.25rem;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    thead th:first-child { border-radius: 0; }
+    thead th.col-ratchet { color: var(--accent); }
+
+    tbody td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--muted);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.015); }
+    tbody td:first-child { color: var(--text); font-weight: 600; font-size: 0.82rem; }
+    tbody td.col-ratchet { color: var(--text); }
+
+    .check { color: var(--green); }
+    .cross { color: var(--muted2); }
+    .partial { color: var(--yellow); }
+
+    /* ── File structure ── */
+    .code-section {
+      padding: 0 2rem 5rem;
     }
 
     pre {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
+      border-radius: 12px;
+      padding: 1.75rem;
       overflow-x: auto;
       font-family: var(--mono);
-      font-size: 0.85rem;
-      line-height: 1.7;
+      font-size: 0.84rem;
+      line-height: 1.75;
       color: var(--muted);
     }
 
@@ -231,11 +573,88 @@
     .c-accent { color: var(--accent); }
     .c-blue { color: var(--accent2); }
     .c-dim { color: #484f58; }
+    .c-purple { color: var(--purple); }
 
-    /* Footer */
+    /* ── Prior art ── */
+    .prior-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .prior-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .prior-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .prior-card h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .prior-card p {
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .prior-card .prior-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      color: var(--accent2);
+    }
+
+    /* ── Docs links ── */
+    .docs-section {
+      padding: 0 2rem 5rem;
+    }
+
+    .docs-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .doc-link {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      transition: border-color 0.15s, background 0.15s;
+      color: var(--text);
+    }
+
+    .doc-link:hover { border-color: var(--accent2); background: var(--surface2); text-decoration: none; color: var(--text); }
+
+    .doc-link-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+    .doc-link-text { flex: 1; }
+    .doc-link-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; }
+    .doc-link-desc { font-size: 0.75rem; color: var(--muted); }
+    .doc-link-arrow { color: var(--accent2); font-size: 1rem; }
+
+    /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 2rem;
+      padding: 2.5rem 2rem;
       text-align: center;
       color: var(--muted);
       font-size: 0.85rem;
@@ -243,116 +662,460 @@
 
     footer a { color: var(--muted); }
     footer a:hover { color: var(--text); }
+    footer .footer-links { margin-bottom: 0.75rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      nav { flex-direction: column; gap: 0.75rem; }
+      .nav-links { flex-wrap: wrap; justify-content: center; }
+      .hero { padding: 4rem 1.5rem 3rem; }
+      .step-connector { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Divider ── */
+    .divider {
+      max-width: 960px;
+      margin: 0 auto 5rem;
+      padding: 0 2rem;
+      border-top: 1px solid var(--border-subtle);
+    }
   </style>
 </head>
 <body>
 
-  <div style="max-width:960px;margin:0 auto;">
+  <!-- Nav -->
+  <div class="nav-wrap">
     <nav>
-      <span class="logo">🔩 <span>ratchet</span></span>
-      <div>
-        <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a>
+      <span class="logo">🔩 <span>ratchet</span><span class="logo-sub">framework</span></span>
+      <div class="nav-links">
         <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+        <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
         <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a class="btn-nav" href="https://github.com/ratchet-framework/Ratchet">GitHub →</a>
       </div>
     </nav>
   </div>
 
-  <section class="hero">
+  <!-- Hero -->
+  <section class="hero container">
     <div class="badge">v0.1 — now open source</div>
     <h1>AI agents that<br><em>only get better.</em></h1>
-    <p class="tagline">
+    <p class="hero-sub">
       Ratchet is a lightweight framework for building AI agents that continuously improve themselves — autonomously, over time, with minimal human involvement.
+    </p>
+    <p class="hero-problem">
+      The problem: AI agents forget everything between sessions. Mistakes repeat. Context decays. Ratchet locks in every improvement so nothing regresses.
     </p>
     <div class="cta-group">
       <a class="btn btn-primary" href="https://github.com/ratchet-framework/Ratchet">View on GitHub</a>
       <a class="btn btn-secondary" href="dashboard.html">Live dashboard →</a>
+      <a class="btn btn-secondary" href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Read the docs →</a>
     </div>
   </section>
 
-  <div class="loop">
-    <div class="loop-steps">
-      <span class="loop-step">Issue surfaces</span>
-      <span class="loop-arrow">→</span>
-      <span class="loop-step">Postmortem</span>
-      <span class="loop-arrow">→</span>
-      <span class="loop-step">Prevention tasks</span>
-      <span class="loop-arrow">→</span>
-      <span class="loop-step">Backlog</span>
-      <span class="loop-arrow">→</span>
-      <span class="loop-step">Autonomous execution</span>
-      <span class="loop-arrow">→</span>
-      <span class="loop-step">Memory update</span>
-      <span class="loop-arrow">↩</span>
+  <!-- Live Stats -->
+  <div class="stats-bar">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-value green">51</div>
+        <div class="stat-label">Memory facts extracted</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value blue">21</div>
+        <div class="stat-label">Capabilities unlocked</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value orange">7→7</div>
+        <div class="stat-label">Incidents → prevention tasks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value purple">T2</div>
+        <div class="stat-label">Trust tier reached</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value green">10+</div>
+        <div class="stat-label">Commits shipped</div>
+      </div>
     </div>
   </div>
 
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">🧠</div>
-      <h3>Memory architecture</h3>
-      <p>Agents persist and curate knowledge across sessions. Long-term memory stays lean and current. Daily logs feed weekly synthesis.</p>
+  <!-- How it works -->
+  <section class="how-section">
+    <div class="section-header">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">The Ratchet loop</h2>
+      <p class="section-desc">Each turn through the loop leaves the agent permanently smarter. Nothing regresses. Every improvement locks in.</p>
     </div>
-    <div class="feature">
-      <div class="feature-icon">🔁</div>
-      <h3>Incident loop</h3>
-      <p>Every failure gets a postmortem. Root cause, blast radius, prevention tasks. "Fixed" means the class of problem is addressed — not just the instance.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📋</div>
-      <h3>Autonomous backlog</h3>
-      <p>Self-identified tasks execute during heartbeats. P1s run immediately. The agent works through the backlog without prompting.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📍</div>
-      <h3>Context system</h3>
-      <p>Authoritative state for location, timezone, and preferences. Never assumed — always checked before creating anything time-sensitive.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📈</div>
-      <h3>Autonomy tiers</h3>
-      <p>Trust expands over time as it's earned. The framework is explicit about what the agent decides alone vs. what it escalates.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⏱️</div>
-      <h3>Cadence tracking</h3>
-      <p>Track anything with a maintenance interval — by time, usage, or both. Pre-service checklists in every alert. Log a completed service in one message.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🔌</div>
-      <h3>Platform-agnostic</h3>
-      <p>Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🧠</div>
-      <h3>Ratchet Memory <span style="font-size:0.7em;background:#1a3a1a;color:#4caf50;padding:2px 8px;border-radius:4px;vertical-align:middle;">Unlocked</span></h3>
-      <p>Adaptive memory that survives session boundaries. Facts extracted automatically, scored by importance, retrieved by relevance. Three phases: extraction, lifecycle scoring, semantic embeddings. <a href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md" style="color:#4caf50;">Reviewed by Claude Opus →</a></p>
-    </div>
-  </div>
 
-  <div class="code-section">
-    <h2>The file structure</h2>
-    <pre><span class="c-blue">your-agent/</span>
+    <div class="steps container">
+      <div class="step">
+        <div class="step-num">Step 01</div>
+        <span class="step-icon">👁️</span>
+        <h3>Observe</h3>
+        <p>Something happens — an incident, a completed task, a session transcript. The agent sees it and notes the signal.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 02</div>
+        <span class="step-icon">⚗️</span>
+        <h3>Extract &amp; Score</h3>
+        <p>Memory facts are extracted from the session. Each fact gets an importance score. Decay, deduplication, and promotion run automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 03</div>
+        <span class="step-icon">🔍</span>
+        <h3>Surface &amp; Root-cause</h3>
+        <p>Failures get postmortems. Root cause is identified. The blast radius is mapped. A prevention task is created — not just a fix.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 04</div>
+        <span class="step-icon">⚙️</span>
+        <h3>Improve</h3>
+        <p>Prevention tasks execute during heartbeats. MEMORY.md is updated. The backlog shrinks. Trust expands. The ratchet clicks forward.</p>
+      </div>
+    </div>
+
+    <p class="loop-tag">
+      <strong>Observe → Extract → Score → Surface → Improve → repeat ↩</strong>
+    </p>
+  </section>
+
+  <!-- Philosophy -->
+  <section class="philosophy-section">
+    <div class="section-header">
+      <div class="section-label">Philosophy</div>
+      <h2 class="section-title">Fix the instance. Fix the class. Prevent the class.</h2>
+    </div>
+
+    <div class="philosophy-card">
+      <div class="ratchet-mantra">
+        Fix the symptom immediately.<br>
+        Then fix the class.<br>
+        Then prevent the class from recurring.<br>
+        <span>The ratchet clicks forward on each turn.</span>
+      </div>
+      <div class="philosophy-steps">
+        <span class="phil-step">Symptom fixed</span>
+        <span class="phil-arrow">→</span>
+        <span class="phil-step">Class fixed</span>
+        <span class="phil-arrow">→</span>
+        <span class="phil-step">Prevention shipped</span>
+        <span class="phil-arrow">→</span>
+        <span class="phil-step">🔩 click</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-top:1.5rem;">
+        Most agents patch symptoms. Ratchet treats every failure as a specimen — extract the class, prevent the class, lock in the improvement. A bug caught and logged is a click forward. A bug fixed without logging is a missed opportunity.
+      </p>
+    </div>
+  </section>
+
+  <!-- Capabilities -->
+  <section class="capabilities-section">
+    <div class="section-header">
+      <div class="section-label">Capabilities</div>
+      <h2 class="section-title">What Ratchet agents can do</h2>
+      <p class="section-desc">Capabilities unlock progressively as trust is established. Here's what's live in the reference implementation.</p>
+    </div>
+
+    <div class="cap-grid">
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">🧠</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Ratchet Memory</h3>
+        <p>Adaptive memory that survives session boundaries. Facts extracted automatically from transcripts, scored by importance and decay, retrieved by semantic similarity. Three phases: extraction → lifecycle scoring → embedding-based retrieval.</p>
+        <a class="cap-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md">Architecture docs →</a>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">🔁</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Incident loop</h3>
+        <p>Every failure gets a postmortem. Root cause, blast radius, prevention tasks — all documented before a fix ships. "Done" means the class of problem is addressed, not just the instance.</p>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">📋</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Autonomous backlog</h3>
+        <p>Self-identified tasks execute during heartbeats. P1s run immediately. P2/P3 work through the backlog without prompting. The agent surfaces its own work.</p>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">📈</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Autonomy tiers</h3>
+        <p>Trust expands over time as it's earned. T1 → T2 → T3. Each tier unlocks additional autonomous action. The framework is explicit about what the agent decides alone vs. escalates.</p>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">⏱️</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Cadence tracking</h3>
+        <p>Track anything with a maintenance interval — by time, usage, or both. Pre-service checklists in every alert. Log a completed service in one message. Works for vehicles, infrastructure, habits.</p>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">📍</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Context system</h3>
+        <p>Authoritative state for location, timezone, and preferences stored in <code style="font-family:var(--mono);font-size:0.8em;color:var(--accent2)">context.json</code>. Never assumed — always checked before creating anything time or location-sensitive.</p>
+      </div>
+
+      <div class="cap-card unlocked">
+        <div class="cap-header">
+          <span class="cap-icon">💓</span>
+          <span class="cap-badge badge-unlocked">Unlocked</span>
+        </div>
+        <h3>Heartbeat system</h3>
+        <p>Periodic polling triggers batched background work — email triage, calendar checks, backlog progress. Configurable via HEARTBEAT.md. Keeps the agent active without constant prompting.</p>
+      </div>
+
+      <div class="cap-card">
+        <div class="cap-header">
+          <span class="cap-icon">🔌</span>
+          <span class="cap-badge badge-locked">Spec</span>
+        </div>
+        <h3>Platform adapters</h3>
+        <p>Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back. Reference implementation ships with OpenClaw.</p>
+        <a class="cap-link" href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations" style="color:var(--accent2);">Reference implementations →</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Opus quote -->
+  <section class="opus-section">
+    <div class="section-header">
+      <div class="section-label">Architecture review</div>
+      <h2 class="section-title">Reviewed by Claude Opus</h2>
+      <p class="section-desc">The Ratchet Memory architecture was submitted to Claude Opus for independent review. Here's the sharpest thing it said.</p>
+    </div>
+
+    <div class="opus-card">
+      <div class="opus-label">
+        🟣 Claude Opus · Architecture review · Ratchet Memory
+      </div>
+      <blockquote>
+        "The core tension: you want the extractor to be creative enough to identify implicit facts but constrained enough to never hallucinate. <strong>Err hard toward literal extraction.</strong> A missed fact is recoverable — it'll surface again. A hallucinated fact poisons the memory store and compounds over time."
+      </blockquote>
+      <div class="opus-meta">
+        This tension — creativity vs. constraint in memory extraction — shaped the design of the extractor pipeline. The scoring system was tuned to penalize low-confidence facts aggressively as a result.
+        <br><br>
+        <a href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md" style="color:var(--purple);">Read the full architecture doc →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison table -->
+  <section class="compare-section">
+    <div class="section-header">
+      <div class="section-label">Comparison</div>
+      <h2 class="section-title">How Ratchet compares</h2>
+      <p class="section-desc">Ratchet isn't a product — it's a framework. Here's what that means in practice.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th class="col-ratchet">🔩 Ratchet</th>
+            <th>Letta</th>
+            <th>Mem0</th>
+            <th>Raw prompting</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Persistent memory across sessions</td>
+            <td class="col-ratchet"><span class="check">✓</span> File-based, portable</td>
+            <td><span class="check">✓</span> Managed service</td>
+            <td><span class="check">✓</span> Managed service</td>
+            <td><span class="cross">✗</span> Manual, fragile</td>
+          </tr>
+          <tr>
+            <td>Memory fact extraction</td>
+            <td class="col-ratchet"><span class="check">✓</span> Autonomous, scored</td>
+            <td><span class="partial">~</span> Structured blocks</td>
+            <td><span class="check">✓</span> Auto-extracted</td>
+            <td><span class="cross">✗</span> None</td>
+          </tr>
+          <tr>
+            <td>Incident postmortems</td>
+            <td class="col-ratchet"><span class="check">✓</span> Built-in format + loop</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Self-directed backlog</td>
+            <td class="col-ratchet"><span class="check">✓</span> P1/P2/P3 autonomous</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Trust tier system</td>
+            <td class="col-ratchet"><span class="check">✓</span> Explicit, expandable</td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>No vendor lock-in</td>
+            <td class="col-ratchet"><span class="check">✓</span> Plain files, any platform</td>
+            <td><span class="cross">✗</span> Letta service</td>
+            <td><span class="cross">✗</span> Mem0 service</td>
+            <td><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Semantic retrieval</td>
+            <td class="col-ratchet"><span class="check">✓</span> Embeddings pipeline</td>
+            <td><span class="check">✓</span></td>
+            <td><span class="check">✓</span></td>
+            <td><span class="cross">✗</span></td>
+          </tr>
+          <tr>
+            <td>Open source</td>
+            <td class="col-ratchet"><span class="check">✓</span> MIT</td>
+            <td><span class="check">✓</span> Apache 2</td>
+            <td><span class="partial">~</span> Core only</td>
+            <td><span class="check">✓</span> N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- File structure -->
+  <section class="code-section">
+    <div class="section-header">
+      <div class="section-label">Structure</div>
+      <h2 class="section-title">The file structure</h2>
+      <p class="section-desc">Ratchet is conventions backed by files. Portable across any agent platform, auditable by humans, version-controlled by default.</p>
+    </div>
+
+    <div class="container">
+      <pre><span class="c-blue">your-agent/</span>
 ├── <span class="c-green">MEMORY.md</span>          <span class="c-dim"># Long-term memory — curated, evolving</span>
 ├── <span class="c-green">BACKLOG.md</span>         <span class="c-dim"># Self-directed work queue — P1/P2/P3</span>
+├── <span class="c-green">CURRENT.md</span>         <span class="c-dim"># Active context — what's in-flight right now</span>
 ├── <span class="c-green">context.json</span>       <span class="c-dim"># Authoritative state (location, units, prefs)</span>
 ├── <span class="c-green">cadence.json</span>       <span class="c-dim"># Interval tracker — time/usage thresholds + alerts</span>
 ├── <span class="c-accent">incidents/</span>
 │   ├── <span class="c-green">README.md</span>      <span class="c-dim"># Postmortem format spec</span>
-│   └── <span class="c-green">INC-001-*.md</span>   <span class="c-dim"># Incident logs</span>
+│   └── <span class="c-green">INC-001-*.md</span>   <span class="c-dim"># Incident logs — root cause, blast radius, prevention</span>
 ├── <span class="c-accent">memory/</span>
-│   ├── <span class="c-green">YYYY-MM-DD.md</span>  <span class="c-dim"># Daily logs</span>
-│   ├── <span class="c-green">facts-YYYY-Q#.jsonl</span>  <span class="c-dim"># Extracted memory facts — scored + timestamped</span>
-│   └── <span class="c-green">embeddings.json</span>  <span class="c-dim"># Semantic vectors for similarity retrieval</span>
+│   ├── <span class="c-green">YYYY-MM-DD.md</span>        <span class="c-dim"># Daily session logs</span>
+│   ├── <span class="c-green">facts-YYYY-Q#.jsonl</span>  <span class="c-dim"># Extracted facts — scored + timestamped</span>
+│   └── <span class="c-green">embeddings.json</span>      <span class="c-dim"># Semantic vectors for similarity retrieval</span>
 └── <span class="c-accent">bin/</span>               <span class="c-dim"># Utility scripts</span>
-    ├── <span class="c-green">memory-extract</span>  <span class="c-dim"># Extract facts from session transcripts</span>
+    ├── <span class="c-green">memory-extract</span>   <span class="c-dim"># Extract facts from session transcripts</span>
     ├── <span class="c-green">memory-retrieve</span>  <span class="c-dim"># Retrieve relevant facts by query</span>
-    ├── <span class="c-green">memory-embed</span>  <span class="c-dim"># Generate/update semantic embeddings</span>
-    └── <span class="c-green">memory-manage</span>  <span class="c-dim"># Decay, promote, deduplicate, purge lifecycle</span></pre>
-  </div>
+    ├── <span class="c-green">memory-embed</span>     <span class="c-dim"># Generate/update semantic embeddings</span>
+    └── <span class="c-green">memory-manage</span>    <span class="c-dim"># Decay, promote, deduplicate, purge lifecycle</span></pre>
+    </div>
+  </section>
 
+  <!-- Docs links -->
+  <section class="docs-section">
+    <div class="section-header">
+      <div class="section-label">Documentation</div>
+      <h2 class="section-title">Read the docs</h2>
+    </div>
+
+    <div class="docs-grid">
+      <a class="doc-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md">
+        <span class="doc-link-icon">🧠</span>
+        <div class="doc-link-text">
+          <div class="doc-link-title">Adaptive Memory</div>
+          <div class="doc-link-desc">Extraction, scoring, lifecycle, embeddings</div>
+        </div>
+        <span class="doc-link-arrow">→</span>
+      </a>
+      <a class="doc-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/orchestration-architecture.md">
+        <span class="doc-link-icon">🏗️</span>
+        <div class="doc-link-text">
+          <div class="doc-link-title">Orchestration Architecture</div>
+          <div class="doc-link-desc">How agents plan, schedule, and execute</div>
+        </div>
+        <span class="doc-link-arrow">→</span>
+      </a>
+      <a class="doc-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/discord-setup.md">
+        <span class="doc-link-icon">💬</span>
+        <div class="doc-link-text">
+          <div class="doc-link-title">Discord Setup</div>
+          <div class="doc-link-desc">Wire Ratchet to a Discord channel</div>
+        </div>
+        <span class="doc-link-arrow">→</span>
+      </a>
+      <a class="doc-link" href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">
+        <span class="doc-link-icon">🔌</span>
+        <div class="doc-link-text">
+          <div class="doc-link-title">Reference Implementations</div>
+          <div class="doc-link-desc">Working examples on real platforms</div>
+        </div>
+        <span class="doc-link-arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Prior art -->
+  <section class="prior-section">
+    <div class="section-header">
+      <div class="section-label">Prior art</div>
+      <h2 class="section-title">Standing on shoulders</h2>
+      <p class="section-desc">Ratchet didn't emerge from a vacuum. These are the ideas and projects that shaped it — intellectual honesty matters.</p>
+    </div>
+
+    <div class="prior-grid">
+      <div class="prior-card">
+        <h4>Generative Agents</h4>
+        <p>Park et al.'s 2023 paper introduced believable agent memory — reflection, planning, and retrieval. The memory stream concept directly influenced Ratchet's fact extraction and importance scoring approach.</p>
+        <a class="prior-link" href="https://arxiv.org/abs/2304.03442">arxiv.org/abs/2304.03442 →</a>
+      </div>
+      <div class="prior-card">
+        <h4>Letta (MemGPT)</h4>
+        <p>Letta pioneered the idea of OS-level memory management for LLMs — paging context in and out like virtual memory. Ratchet borrows the intuition but keeps it file-based and platform-agnostic.</p>
+        <a class="prior-link" href="https://letta.com">letta.com →</a>
+      </div>
+      <div class="prior-card">
+        <h4>Zep</h4>
+        <p>Zep demonstrated that structured, searchable long-term memory can be a standalone service. Ratchet takes the opposite bet — local files, no infra dependency, human-readable by default.</p>
+        <a class="prior-link" href="https://getzep.com">getzep.com →</a>
+      </div>
+      <div class="prior-card">
+        <h4>Mem0</h4>
+        <p>Mem0 proved the market for persistent AI memory. Their auto-extraction approach validated the core hypothesis. Ratchet adds the incident loop, trust tiers, and self-directed backlog on top.</p>
+        <a class="prior-link" href="https://mem0.ai">mem0.ai →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
   <footer>
-    <p>Built by <a href="https://github.com/ratchet-framework">ratchet-framework</a> · <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a> · MIT License</p>
+    <div class="footer-links">
+      <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+    <p>Built by <a href="https://github.com/ratchet-framework">ratchet-framework</a> · MIT License · The ratchet only clicks forward.</p>
   </footer>
 
 </body>
