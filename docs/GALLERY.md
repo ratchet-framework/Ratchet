@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — Cron Jobs (demo)
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-cron-mobile.png) | ![desktop](screenshots/mission-control-cron-desktop.png) |
+
 ## Mission Control — Tasks (demo)
 _2026-02-28_
 
