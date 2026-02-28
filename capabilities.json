@@ -8,7 +8,7 @@
   "branches": {
     "core": {
       "label": "Core",
-      "icon": "🧠",
+      "icon": "\ud83e\udde0",
       "capabilities": [
         {
           "id": "memory-system",
@@ -27,7 +27,7 @@
         {
           "id": "context-system",
           "label": "Context system",
-          "description": "Authoritative state file (context.json) for location, timezone, and preferences. Never assumed — always checked.",
+          "description": "Authoritative state file (context.json) for location, timezone, and preferences. Never assumed \u2014 always checked.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
@@ -56,12 +56,12 @@
     },
     "autonomy": {
       "label": "Autonomy",
-      "icon": "🔁",
+      "icon": "\ud83d\udd01",
       "capabilities": [
         {
           "id": "heartbeat-monitoring",
           "label": "Heartbeat monitoring",
-          "description": "Recurring health checks every 30 minutes. System status, service health, incident detection — all autonomous.",
+          "description": "Recurring health checks every 30 minutes. System status, service health, incident detection \u2014 all autonomous.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
@@ -104,7 +104,7 @@
     },
     "integrations": {
       "label": "Integrations",
-      "icon": "📡",
+      "icon": "\ud83d\udce1",
       "capabilities": [
         {
           "id": "telegram",
@@ -116,7 +116,7 @@
         {
           "id": "github",
           "label": "GitHub (full access)",
-          "description": "SSH push access + API management as Pawl (pawlratchet). Commits, issues, repo settings — all autonomous.",
+          "description": "SSH push access + API management as Pawl (pawlratchet). Commits, issues, repo settings \u2014 all autonomous.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
@@ -137,14 +137,14 @@
         {
           "id": "email-send",
           "label": "Email (send)",
-          "description": "Outbound email from Pawl's address. Blocked by DigitalOcean SMTP firewall — requires unblock request or relay service.",
+          "description": "Outbound email from Pawl's address. Blocked by DigitalOcean SMTP firewall \u2014 requires unblock request or relay service.",
           "status": "locked",
           "unlockedAt": null
         },
         {
           "id": "home-automation",
           "label": "Home automation",
-          "description": "Control smart home devices — lights, thermostat, locks. Trigger scenes based on calendar, location, or time.",
+          "description": "Control smart home devices \u2014 lights, thermostat, locks. Trigger scenes based on calendar, location, or time.",
           "status": "locked",
           "unlockedAt": null
         },
@@ -166,7 +166,7 @@
     },
     "security": {
       "label": "Security",
-      "icon": "🔒",
+      "icon": "\ud83d\udd12",
       "capabilities": [
         {
           "id": "secrets-management",
@@ -179,22 +179,22 @@
           "id": "prompt-injection-defense",
           "label": "Prompt injection defense",
           "description": "Email and calendar content treated as untrusted data. Delimiter wrapping, sender allowlisting, no autonomous action from external content.",
-          "status": "locked",
-          "unlockedAt": null
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         },
         {
           "id": "sender-allowlist",
           "label": "Sender allowlist",
           "description": "Only process email content from known trusted senders. Unknown senders get metadata-only treatment.",
-          "status": "locked",
-          "unlockedAt": null
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         },
         {
           "id": "sandboxed-processing",
           "label": "Sandboxed processing",
           "description": "External content parsed in isolated sessions with restricted prompts and no tool access.",
-          "status": "locked",
-          "unlockedAt": null
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         },
         {
           "id": "audit-trail",
@@ -207,7 +207,7 @@
     },
     "infrastructure": {
       "label": "Infrastructure",
-      "icon": "🌐",
+      "icon": "\ud83c\udf10",
       "capabilities": [
         {
           "id": "agent-identity",
@@ -226,14 +226,14 @@
         {
           "id": "landing-page",
           "label": "Landing page",
-          "description": "getratchet.dev — live, HTTPS, GitHub Pages. The framework has a public home.",
+          "description": "getratchet.dev \u2014 live, HTTPS, GitHub Pages. The framework has a public home.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
         },
         {
           "id": "capability-dashboard",
           "label": "Capability dashboard",
-          "description": "This page. A living visualization of the agent's progress — Minecraft-style advancement tree, updated on every unlock.",
+          "description": "This page. A living visualization of the agent's progress \u2014 Minecraft-style advancement tree, updated on every unlock.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
         },
