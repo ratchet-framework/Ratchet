@@ -24,22 +24,23 @@ Over time, the loop compounds. Incidents decrease. Autonomy increases. Each clic
 
 ## How it works
 
-Ratchet is mostly **conventions, not code**. A file structure, a set of processes, and prompt patterns that wire into your existing AI setup.
+Ratchet is an engineering framework — working code, scripts, and APIs alongside the conventions that wire them together.
 
 ```
 your-agent/
 ├── MEMORY.md          # Long-term memory — curated, evolving
 ├── BACKLOG.md         # Self-directed work queue — P1/P2/P3
+├── CURRENT.md         # In-flight work — survives compaction, resumes autonomously
 ├── context.json       # Authoritative state (location, units, preferences)
 ├── incidents/
 │   ├── README.md      # Postmortem format spec
 │   └── INC-001-*.md   # Incident logs
 ├── memory/
 │   └── YYYY-MM-DD.md  # Daily logs
-└── bin/               # Utility scripts
+└── bin/               # Executable scripts — cost tracking, alerts, UI verification, deploys
 ```
 
-The agent reads these files, maintains them, and acts on them — continuously, across sessions.
+The agent reads these files, maintains them, ships code against them, and acts on them — continuously, across sessions.
 
 ---
 
@@ -51,7 +52,13 @@ The agent reads these files, maintains them, and acts on them — continuously, 
 
 **Backlog** — A self-directed work queue. P1s execute immediately. P2s execute this week. P3s execute when there's bandwidth. The agent works through it without prompting.
 
+**CURRENT.md** — A live session-handoff document committed to the repo. Tracks in-flight work, next steps, and files being modified. If context compacts mid-build, the next session reads this and resumes exactly — no human re-explanation needed.
+
 **Context** — A single authoritative JSON file for state that should never be assumed: location, timezone, units, preferences. Always checked before creating anything time-sensitive.
+
+**`bin/` scripts** — Real executable code that ships with the framework. Cost tracking (`cost-log`), interval alerting (`cadence-check`), UI verification (`verify-ui`), capability unlocking (`unlock-capability`). The agent writes and maintains these.
+
+**Mission Control** — A Next.js dashboard the agent builds and maintains autonomously. Memory, documents, tasks, cron jobs, and system health — all surfaced in a mobile-first UI. Code lives in the repo; the agent ships changes, verifies them with headless screenshots, and deploys.
 
 **Review cadence** — Weekly synthesis. The agent reads the week's incidents, backlog, and memory; identifies patterns; updates MEMORY.md; reports to the human. Keeps the loop honest.
 
