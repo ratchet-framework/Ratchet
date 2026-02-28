@@ -5,60 +5,66 @@ It is the single source of truth for in-flight work. If context compacts, start 
 
 ## Active session
 **Date:** 2026-02-28
-**Status:** Active — major session, many systems built
+**Status:** Late afternoon — major session complete, one open decision
 
 ## What shipped today
 
 ### Morning briefing upgrades
-- [x] Calendar section: today + tomorrow events, travel keyword scanning
-- [x] North Star section: 3 mission-aligned actions daily (reads NORTH-STAR.md, CURRENT.md, trust.json)
-- [x] Restart count bug fixed (INC-004): now time-bounded to last 24h
+- [x] Calendar: today + tomorrow, travel keyword scanning
+- [x] North Star section: 3 mission-aligned actions daily
+- [x] Restart count bug fixed (INC-004)
 
 ### Calendar integration
-- [x] Google Calendar write scope authorized
-- [x] 3 recurring events created: Monthly Milestone Check, Monthly Sync, Quarterly North Star Review
-- [x] gcal-today: graceful degradation on auth failure (INC-006)
-- [x] bin/travel-detect: scans next 7 days for travel keywords, Telegram alert, deduplication
-- [x] Travel detection wired into heartbeat
+- [x] Write scope authorized, 3 recurring events created
+- [x] bin/travel-detect: scans 7 days for travel keywords
+- [x] gcal-today: graceful degradation on auth failure
+- [x] INC-006: OAuth client disabled — deferred fix
 
-### Vehicle maintenance system (new)
-- [x] vehicles.md: full specs for WRX, Tacoma, Outback (oil type/capacity, filter #s, drain bolt, washers)
-- [x] Inventory catalogued: 10x Outback filters, 1x Tacoma filter, 10x Tacoma crush washers, 0x WRX filters
-- [x] cadence.json: 17 items with thresholds, alert windows, pre-service specs
-- [x] bin/cadence-check: upgraded with pre-service checklists + "reply when done" prompt
-- [x] bin/cadence-update: one-command service logging, resets alert state
-- [x] Outback CEL: P0141 (secondary O2 sensor replaced 2026-02-28), monitoring at 88,191 mi
-- [x] Outback rear brakes: pads staged (26696AN00A), rotors still needed
+### Vehicle maintenance system
+- [x] vehicles.md: full specs, part numbers, inventory, service history
+- [x] cadence.json: 17 items across WRX/Tacoma/Outback
+- [x] bin/cadence-check: pre-service checklists, "reply when done" prompt
+- [x] bin/cadence-update: one-command service logging
+- [x] bin/travel-detect: calendar travel scan
+- [x] Outback P0141 logged, monitoring
+- [x] Outback rear pads staged, rotors needed
 
 ### Growth / Ratchet
-- [x] README overhaul: screenshots, trust tiers, metrics, adapters table (Issue #14 closed)
-- [x] MIT license added to Ratchet repo
-- [x] Awesome-list PRs opened: kaushikb11/awesome-llm-agents #77, kyrolabs/awesome-agents #155
-- [x] Issue #15 closed
+- [x] README overhaul (Issue #14 closed)
+- [x] MIT license added
+- [x] PRs opened: kaushikb11 #77, kyrolabs #155 (Issue #15 closed)
+- [x] Cadence feature card on getratchet.dev
+- [x] publish-process.md documented
+- [x] unlock-capability prints publish checklist
 
-### Process improvements
-- [x] AGENTS.md: parallel execution rule, Telegram routing discipline, vehicle service logging, GitHub commit rule
-- [x] INC-004 (briefing restart count), INC-005 (parallel execution promise), INC-006 (OAuth client disabled)
+### Process
+- [x] AGENTS.md: parallel execution, routing discipline, vehicle logging, GitHub commit, publish process rules
+- [x] INC-004, INC-005, INC-006 logged
 
-## Current status by vehicle
-- WRX: oil ✅ (Jun 2026), tires 🔴 overdue, brakes ✅, filter 0 in stock ⚠️
-- Tacoma: oil 🟡 (Mar 2026), brakes 🔴 overdue (44mo), diff service staged ⏳
-- Outback: oil ✅ (Jun 2026), brakes 🔴 overdue, rear brake pads staged ✅, rotors needed, CEL monitoring
+## Open decision (needs Aaron)
+**Process enforcement structure**: Aaron asked "gate during build, or end-of-session?"
+- Option 2 (tool enforcement) partially live: unlock-capability prints checklist
+- Full structural fix pending Aaron's answer
+- Resume: ask Aaron to answer this when next session starts
 
 ## Blocked
-- Google Calendar auth (INC-006): OAuth client disabled by Google — fix via Cloud Console when ready
-- Tacoma/Outback service day: waiting for good weather weekend; diffs/brakes/rotors to stage
+- Google OAuth (INC-006): Cloud Console fix, Aaron's action when ready
+- WRX filter reorder: order 15208AA170 qty 3 before June 2026
+- Outback rear rotors: order before scheduling brake job
+- Tacoma service day: waiting on weather + calendar
 
-## Next steps
-1. Order WRX filters (15208AA170, qty 3) — 0 in stock
-2. Order Outback rear rotors — pads staged, rotors still needed
-3. Fix Google OAuth client (Cloud Console, Aaron's action)
-4. Cadence: Aaron reports completed service → Pawl runs cadence-update silently
-5. Tacoma service day: oil + diffs + brakes + rotation (parts staged)
+## Next steps (in order)
+1. Answer process enforcement question (Aaron)
+2. Order WRX filters 15208AA170
+3. Order Outback rear rotors
+4. Fix Google OAuth when ready (Cloud Console)
+5. Populate demo fixtures for Cadence in Mission Control
+6. Screenshot getratchet.dev cadence card when browser available
 
 ## Resume instructions (after compaction)
 1. Read SOUL.md, USER.md, MEMORY.md
 2. Read this file
 3. Read memory/2026-02-28.md for full session detail
-4. Key tools: bin/cadence-check, bin/cadence-update, bin/travel-detect
-5. Vehicle service logging rule: in AGENTS.md — run cadence-update silently when Aaron reports a completed service
+4. First: ask Aaron about process enforcement structure (open decision above)
+5. Vehicle service logging: run cadence-update silently when Aaron reports service done
+6. Cadence IDs: `cadence-update --list` to see all
