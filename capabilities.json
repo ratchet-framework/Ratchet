@@ -241,8 +241,8 @@
           "id": "ui-verification",
           "label": "UI verification",
           "description": "Screenshot and visually verify browser-rendered results without requiring the human to take screenshots.",
-          "status": "locked",
-          "unlockedAt": null
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         },
         {
           "id": "custom-domain",
