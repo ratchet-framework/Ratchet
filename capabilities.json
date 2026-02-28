@@ -163,9 +163,9 @@
           "unlockedAt": null
         },
         {
-          "id": "vehicle-tracking",
-          "label": "Vehicle tracking",
-          "description": "Digital maintenance log for all three vehicles. Tracks service history, calculates due dates, fires reminders automatically.",
+          "id": "cadence",
+          "label": "Cadence",
+          "description": "Track anything needing regular attention \u2014 time elapsed, usage accumulated, or both.",
           "status": "locked",
           "unlockedAt": null
         }
