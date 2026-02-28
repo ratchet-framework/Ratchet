@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — Documents
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-documents-mobile.png) | ![desktop](screenshots/mission-control-documents-desktop.png) |
+
 ## Mission Control — Tasks
 _2026-02-28_
 
