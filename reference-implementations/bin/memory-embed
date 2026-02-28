@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""
+memory-embed — Embed facts using OpenAI text-embedding-3-small or TF-IDF fallback.
+
+Reads facts from memory/facts-*.jsonl, embeds any that don't yet have an embedding,
+and stores results in memory/embeddings.json as {fact_id: [float, ...]}.
+
+Usage:
+  python3 workspace/bin/memory-embed [--all] [--fact-id <id>] [--dry-run]
+
+Options:
+  --all           Embed all facts that don't have embeddings (default if no --fact-id)
+  --fact-id <id>  Embed a single specific fact
+  --dry-run       Report what would be embedded, but don't write anything
+"""
+
+import os
+import sys
+import json
+import glob
+import math
+import re
+import argparse
+from urllib import request as urlreq
+
+WORKSPACE = "/root/.openclaw/workspace"
+MEMORY_DIR = os.path.join(WORKSPACE, "memory")
+EMBEDDINGS_FILE = os.path.join(MEMORY_DIR, "embeddings.json")
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+EMBED_MODEL = "text-embedding-3-small"
+
+
+# ── OpenAI Embedding ──────────────────────────────────────────────────────────
+
+def embed_openai(texts):
+    """
+    Embed a batch of texts using OpenAI text-embedding-3-small.
+    Returns list of embedding vectors (list of floats).
+    """
+    payload = {
+        "model": EMBED_MODEL,
+        "input": texts,
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urlreq.Request(
+        "https://api.openai.com/v1/embeddings",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+        },
+        method="POST",
+    )
+    with urlreq.urlopen(req, timeout=60) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    # Returns in same order as input
+    return [item["embedding"] for item in sorted(result["data"], key=lambda x: x["index"])]
+
+
+# ── TF-IDF Fallback Embedding ─────────────────────────────────────────────────
+
+def tokenize(text):
+    """Simple tokenizer: lowercase, strip punctuation, split on whitespace."""
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return [t for t in text.split() if len(t) > 1]
+
+
+def build_vocab_and_idf(all_texts):
+    """Build vocabulary and IDF weights from all texts."""
+    import math
+    N = len(all_texts)
+    df = {}  # document frequency per term
+    tokenized = []
+    for text in all_texts:
+        tokens = set(tokenize(text))
+        tokenized.append(tokens)
+        for t in tokens:
+            df[t] = df.get(t, 0) + 1
+
+    # IDF = log(N / df) + 1 (smoothed)
+    vocab = sorted(df.keys())
+    vocab_index = {t: i for i, t in enumerate(vocab)}
+    idf = {t: math.log(N / df[t]) + 1.0 for t in vocab}
+    return vocab_index, idf
+
+
+def embed_tfidf_single(text, vocab_index, idf):
+    """Produce a unit-normalized TF-IDF vector for a single text."""
+    tokens = tokenize(text)
+    tf = {}
+    for t in tokens:
+        tf[t] = tf.get(t, 0) + 1
+    total = max(len(tokens), 1)
+
+    dim = len(vocab_index)
+    vec = [0.0] * dim
+    for t, count in tf.items():
+        if t in vocab_index:
+            idx = vocab_index[t]
+            vec[idx] = (count / total) * idf.get(t, 1.0)
+
+    # L2 normalize
+    norm = math.sqrt(sum(x * x for x in vec))
+    if norm > 0:
+        vec = [x / norm for x in vec]
+    return vec
+
+
+def embed_tfidf(texts, all_corpus_texts=None):
+    """
+    TF-IDF fallback embedding. Builds vocab from all_corpus_texts (or texts if not given).
+    Returns list of vectors, one per text in `texts`.
+    """
+    corpus = all_corpus_texts if all_corpus_texts else texts
+    vocab_index, idf = build_vocab_and_idf(corpus)
+    return [embed_tfidf_single(t, vocab_index, idf) for t in texts]
+
+
+# ── Fact loading ──────────────────────────────────────────────────────────────
+
+def load_all_facts():
+    """Load all active facts from memory/facts-*.jsonl."""
+    facts = []
+    pattern = os.path.join(MEMORY_DIR, "facts-*.jsonl")
+    for path in sorted(glob.glob(pattern)):
+        if "purged" in os.path.basename(path):
+            continue
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    facts.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+    return facts
+
+
+def load_embeddings():
+    """Load existing embeddings from embeddings.json."""
+    if not os.path.exists(EMBEDDINGS_FILE):
+        return {}
+    with open(EMBEDDINGS_FILE) as f:
+        return json.load(f)
+
+
+def save_embeddings(embeddings):
+    """Save embeddings dict to embeddings.json."""
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    with open(EMBEDDINGS_FILE, "w") as f:
+        json.dump(embeddings, f)
+
+
+def fact_text(fact):
+    """Build the text to embed for a fact (content + tags for richer signal)."""
+    content = fact.get("content", "")
+    tags = " ".join(fact.get("tags", []))
+    category = fact.get("category", "")
+    return f"{category}: {content} {tags}".strip()
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(description="Embed memory facts")
+    parser.add_argument("--all", action="store_true", help="Embed all un-embedded facts")
+    parser.add_argument("--fact-id", help="Embed a single fact by ID")
+    parser.add_argument("--dry-run", action="store_true", help="Report only, no writes")
+    args = parser.parse_args()
+
+    # Determine mode
+    embed_all = args.all or (not args.fact_id)  # default to --all
+
+    # Load facts and existing embeddings
+    all_facts = load_all_facts()
+    existing = load_embeddings()
+
+    if not all_facts:
+        print("No facts found. Run memory-extract first.")
+        return
+
+    # Filter to facts needing embedding
+    if args.fact_id:
+        targets = [f for f in all_facts if f.get("id") == args.fact_id]
+        if not targets:
+            print(f"ERROR: fact ID {args.fact_id} not found", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # All facts without an embedding
+        targets = [f for f in all_facts if f.get("id") not in existing]
+
+    already_embedded = len(all_facts) - len(targets)
+
+    if args.dry_run:
+        print(f"[dry-run] Would embed {len(targets)} facts ({already_embedded} already have embeddings)")
+        for f in targets[:10]:
+            print(f"  → [{f.get('id','?')[:8]}] {f.get('content','')[:80]}")
+        if len(targets) > 10:
+            print(f"  ... and {len(targets) - 10} more")
+        return
+
+    if not targets:
+        print(f"Embedded 0 facts ({already_embedded} already had embeddings)")
+        return
+
+    # Choose embedding method
+    use_openai = bool(OPENAI_API_KEY)
+    method = "OpenAI text-embedding-3-small" if use_openai else "TF-IDF (local fallback)"
+    print(f"  [memory-embed] Using {method}", file=sys.stderr)
+    print(f"  [memory-embed] Embedding {len(targets)} facts...", file=sys.stderr)
+
+    texts = [fact_text(f) for f in targets]
+    new_embeddings = {}
+
+    if use_openai:
+        # Batch in chunks of 100 (API limit)
+        BATCH = 100
+        for i in range(0, len(texts), BATCH):
+            batch_texts = texts[i:i+BATCH]
+            batch_facts = targets[i:i+BATCH]
+            try:
+                vectors = embed_openai(batch_texts)
+                for fact, vec in zip(batch_facts, vectors):
+                    new_embeddings[fact["id"]] = vec
+                print(f"  [memory-embed] Batch {i//BATCH + 1}: {len(batch_texts)} embedded", file=sys.stderr)
+            except Exception as e:
+                print(f"  [memory-embed] OpenAI failed ({e}), falling back to TF-IDF for this batch", file=sys.stderr)
+                # TF-IDF fallback for this batch — build corpus from all fact texts
+                all_texts = [fact_text(f) for f in all_facts]
+                vecs = embed_tfidf(batch_texts, all_corpus_texts=all_texts)
+                for fact, vec in zip(batch_facts, vecs):
+                    new_embeddings[fact["id"]] = vec
+    else:
+        # TF-IDF for all — build corpus from all facts for consistent vocab
+        all_corpus_texts = [fact_text(f) for f in all_facts]
+        vectors = embed_tfidf(texts, all_corpus_texts=all_corpus_texts)
+        for fact, vec in zip(targets, vectors):
+            new_embeddings[fact["id"]] = vec
+
+    # Merge and save
+    existing.update(new_embeddings)
+    save_embeddings(existing)
+
+    print(f"Embedded {len(new_embeddings)} facts ({already_embedded} already had embeddings)")
+
+
+if __name__ == "__main__":
+    main()

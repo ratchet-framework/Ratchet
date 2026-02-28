@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+"""
+memory-manage — Weekly lifecycle manager for Ratchet Memory.
+
+Reads all memory/facts-*.jsonl files and applies:
+  - Decay: importance × 0.95/week unreferenced (standard), × 0.80/week (transient)
+  - Promotion: importance > 0.8 AND reference_count >= 3 → mark promoted=true
+  - Contradiction detection: overlapping tags with contradicting content → flag for review
+  - Purge: effective importance < 0.1 AND tier != "permanent" → move to facts-purged.jsonl
+
+Usage:
+  python3 workspace/bin/memory-manage [--dry-run] [--report-only]
+
+Options:
+  --dry-run       Compute and report, but do NOT write any changes
+  --report-only   Alias for --dry-run
+"""
+
+import os
+import sys
+import json
+import glob
+import math
+import argparse
+import shutil
+import tempfile
+from datetime import datetime, timezone, timedelta
+
+WORKSPACE = "/root/.openclaw/workspace"
+MEMORY_DIR = os.path.join(WORKSPACE, "memory")
+PURGED_FILE = os.path.join(MEMORY_DIR, "facts-purged.jsonl")
+LOG_FILE = os.path.join(MEMORY_DIR, "memory-log.jsonl")
+EMBEDDINGS_FILE = os.path.join(MEMORY_DIR, "embeddings.json")
+
+# Decay rates per week
+DECAY_STANDARD = 0.95    # multiply importance by this per week unreferenced
+DECAY_TRANSIENT = 0.80   # faster decay for transient tier
+
+# Thresholds
+PROMOTION_IMPORTANCE = 0.8
+PROMOTION_REFS = 3
+PURGE_THRESHOLD = 0.1
+
+
+def et_today():
+    et = timezone(timedelta(hours=-5))
+    return datetime.now(et).strftime("%Y-%m-%d")
+
+
+def days_since(date_str, today_str):
+    """Return number of days between date_str and today_str."""
+    try:
+        d1 = datetime.strptime(date_str, "%Y-%m-%d")
+        d2 = datetime.strptime(today_str, "%Y-%m-%d")
+        return max(0, (d2 - d1).days)
+    except Exception:
+        return 30
+
+
+def weeks_since(date_str, today_str):
+    """Return fractional weeks since date_str."""
+    return days_since(date_str, today_str) / 7.0
+
+
+def load_facts_from_file(path):
+    """Load facts from a JSONL file. Returns list of dicts."""
+    facts = []
+    with open(path) as f:
+        for lineno, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                facts.append(json.loads(line))
+            except json.JSONDecodeError:
+                print(f"  WARN: skipping unparseable line {lineno} in {path}", file=sys.stderr)
+    return facts
+
+
+def load_all_facts():
+    """Load all facts from memory/facts-*.jsonl (excluding purged). Returns {path: [facts]}."""
+    result = {}
+    pattern = os.path.join(MEMORY_DIR, "facts-*.jsonl")
+    for path in sorted(glob.glob(pattern)):
+        if "purged" in os.path.basename(path):
+            continue
+        result[path] = load_facts_from_file(path)
+    return result
+
+
+def apply_decay(fact, today):
+    """
+    Apply weekly decay to a fact's importance in-place.
+    Returns (new_importance, weeks_applied, was_decayed).
+    Permanent tier: no decay.
+    """
+    tier = fact.get("tier", "standard")
+    if tier == "permanent":
+        return fact["importance"], 0, False
+
+    last_ref = fact.get("last_referenced") or fact.get("created") or today
+    w = weeks_since(last_ref, today)
+    if w <= 0:
+        return fact["importance"], 0, False
+
+    rate = DECAY_STANDARD if tier == "standard" else DECAY_TRANSIENT
+    # Apply decay for each week since last referenced
+    new_importance = fact["importance"] * (rate ** w)
+    new_importance = max(0.0, min(1.0, new_importance))
+    return new_importance, w, True
+
+
+def detect_contradictions(all_facts):
+    """
+    Find facts with overlapping tags that may contradict each other.
+    Heuristic: same tags AND one says 'prefers X'/'uses X' while another says 'switched'/'now uses'/'changed'.
+
+    Returns list of (fact_a, fact_b, reason) tuples.
+    """
+    SWITCH_SIGNALS = [
+        "switched", "changed", "now uses", "no longer", "stopped", "moved to",
+        "replaced", "prefers now", "switched to", "changed to",
+    ]
+    PREFERENCE_SIGNALS = [
+        "prefers", "uses", "likes", "favorite", "always", "typically",
+    ]
+
+    contradictions = []
+    # Index by tag sets for O(n²) overlap check — fine for hundreds of facts
+    for i, fa in enumerate(all_facts):
+        tags_a = set(fa.get("tags", []))
+        content_a = fa.get("content", "").lower()
+        if not tags_a:
+            continue
+        for fb in all_facts[i+1:]:
+            tags_b = set(fb.get("tags", []))
+            content_b = fb.get("content", "").lower()
+            if not tags_b:
+                continue
+            # Only check facts with overlapping tags
+            if not (tags_a & tags_b):
+                continue
+            # Skip if one supersedes the other (known relationship)
+            if fa.get("superseded_by") or fb.get("superseded_by"):
+                continue
+            if fa.get("supersedes") and fb["id"] in str(fa.get("supersedes", "")):
+                continue
+
+            # Check for contradiction signal: one has preference, other has switch signal
+            a_has_pref = any(s in content_a for s in PREFERENCE_SIGNALS)
+            b_has_switch = any(s in content_b for s in SWITCH_SIGNALS)
+            b_has_pref = any(s in content_b for s in PREFERENCE_SIGNALS)
+            a_has_switch = any(s in content_a for s in SWITCH_SIGNALS)
+
+            if (a_has_pref and b_has_switch) or (b_has_pref and a_has_switch):
+                reason = "preference vs. change signal on shared tags: " + str(list(tags_a & tags_b))
+                contradictions.append((fa, fb, reason))
+
+    return contradictions
+
+
+def append_to_purged(facts):
+    """Append facts to facts-purged.jsonl."""
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    with open(PURGED_FILE, "a") as f:
+        for fact in facts:
+            f.write(json.dumps(fact) + "\n")
+
+
+def rewrite_without_purged(path, purged_ids):
+    """
+    Rewrite a JSONL file excluding purged fact IDs (temp file swap).
+    Append-only constraint is relaxed ONLY for purge operations.
+    """
+    facts = load_facts_from_file(path)
+    kept = [f for f in facts if f.get("id") not in purged_ids]
+    if len(kept) == len(facts):
+        return 0  # nothing removed
+
+    # Atomic write via temp file
+    fd, tmp_path = tempfile.mkstemp(dir=MEMORY_DIR, prefix="facts-tmp-")
+    try:
+        with os.fdopen(fd, "w") as f:
+            for fact in kept:
+                f.write(json.dumps(fact) + "\n")
+        shutil.move(tmp_path, path)
+    except Exception:
+        os.unlink(tmp_path)
+        raise
+
+    return len(facts) - len(kept)
+
+
+def remove_embeddings(fact_ids, dry_run=False):
+    """Remove embeddings for the given fact IDs from embeddings.json."""
+    if not fact_ids or not os.path.exists(EMBEDDINGS_FILE):
+        return 0
+    with open(EMBEDDINGS_FILE) as f:
+        embeddings = json.load(f)
+    removed = 0
+    for fid in fact_ids:
+        if fid in embeddings:
+            del embeddings[fid]
+            removed += 1
+    if removed > 0 and not dry_run:
+        with open(EMBEDDINGS_FILE, "w") as f:
+            json.dump(embeddings, f)
+    return removed
+
+
+def log_event(event_type, fact_id, detail, dry_run=False):
+    """Append an audit event to memory-log.jsonl."""
+    if dry_run:
+        return
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": event_type,
+        "fact_id": fact_id,
+        "detail": detail,
+    }
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    with open(LOG_FILE, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Weekly memory lifecycle manager")
+    parser.add_argument("--dry-run", "--report-only", action="store_true",
+                        help="Compute and report, but write no changes")
+    args = parser.parse_args()
+    dry_run = args.dry_run
+
+    today = et_today()
+    print(f"=== Memory Management Report — {today} ===")
+    if dry_run:
+        print("(DRY RUN — no files will be modified)")
+    print()
+
+    # Load all active facts
+    facts_by_file = load_all_facts()
+    all_facts = []
+    for facts in facts_by_file.values():
+        all_facts.extend(facts)
+
+    total = len(all_facts)
+    print(f"Loaded {total} facts from {len(facts_by_file)} file(s).")
+    print()
+
+    # ── Tier counts ──────────────────────────────────────────────────────────
+    permanent_facts = [f for f in all_facts if f.get("tier") == "permanent"]
+    standard_facts = [f for f in all_facts if f.get("tier", "standard") == "standard"]
+    transient_facts = [f for f in all_facts if f.get("tier") == "transient"]
+
+    # ── Decay ────────────────────────────────────────────────────────────────
+    decayed_count = 0
+    decayed_facts = []  # track for reporting
+
+    for fact in all_facts:
+        new_imp, weeks, was_decayed = apply_decay(fact, today)
+        if was_decayed and abs(new_imp - fact["importance"]) > 0.001:
+            old_imp = fact["importance"]
+            fact["_new_importance"] = new_imp
+            fact["_old_importance"] = old_imp
+            decayed_count += 1
+            decayed_facts.append(fact)
+
+    # ── Promotion ────────────────────────────────────────────────────────────
+    promoted_list = []
+    for fact in all_facts:
+        if fact.get("promoted"):
+            continue  # already promoted
+        imp = fact.get("_new_importance", fact.get("importance", 0))
+        ref_count = fact.get("reference_count", 0)
+        if imp > PROMOTION_IMPORTANCE and ref_count >= PROMOTION_REFS:
+            promoted_list.append(fact)
+
+    # ── Contradiction detection ───────────────────────────────────────────────
+    contradictions = detect_contradictions(all_facts)
+
+    # ── Purge candidates ─────────────────────────────────────────────────────
+    purge_candidates = []
+    for fact in all_facts:
+        if fact.get("tier") == "permanent":
+            continue
+        eff_imp = fact.get("_new_importance", fact.get("importance", 0))
+        if eff_imp < PURGE_THRESHOLD:
+            purge_candidates.append(fact)
+
+    # ── Apply changes (unless dry-run) ────────────────────────────────────────
+    if not dry_run:
+        # Apply decayed importance values
+        # We need to rewrite the JSONL files with updated importance
+        # Per constraint: append-only EXCEPT for purge. So decay updates
+        # are written in-place via temp file swap (same mechanism as purge).
+        purge_ids = {f["id"] for f in purge_candidates}
+
+        for path, file_facts in facts_by_file.items():
+            updated = False
+            new_lines = []
+            for fact in file_facts:
+                fid = fact.get("id")
+                if fid in purge_ids:
+                    continue  # exclude purged facts
+
+                # Apply decay
+                if "_new_importance" in fact:
+                    fact["importance"] = fact["_new_importance"]
+                    del fact["_new_importance"]
+                    if "_old_importance" in fact:
+                        del fact["_old_importance"]
+                    updated = True
+
+                # Apply promotion
+                for pf in promoted_list:
+                    if pf["id"] == fid and not fact.get("promoted"):
+                        fact["promoted"] = True
+                        updated = True
+                        break
+
+                new_lines.append(fact)
+
+            if updated or purge_ids:
+                fd, tmp_path = tempfile.mkstemp(dir=MEMORY_DIR, prefix="facts-tmp-")
+                try:
+                    with os.fdopen(fd, "w") as f:
+                        for fact in new_lines:
+                            f.write(json.dumps(fact) + "\n")
+                    shutil.move(tmp_path, path)
+                except Exception:
+                    os.unlink(tmp_path)
+                    raise
+
+        # Write purged facts to facts-purged.jsonl
+        if purge_candidates:
+            append_to_purged(purge_candidates)
+            for f in purge_candidates:
+                log_event("purged", f["id"], f"importance={f.get('importance',0):.3f}", dry_run=False)
+
+        # Remove embeddings for purged and superseded facts
+        purge_ids_list = [f["id"] for f in purge_candidates]
+        superseded_ids = [f["id"] for f in all_facts if f.get("superseded_by")]
+        remove_ids = list(set(purge_ids_list + superseded_ids))
+        removed_embed = remove_embeddings(remove_ids, dry_run=False)
+        if removed_embed > 0:
+            print(f"  [memory-manage] Removed {removed_embed} embeddings for purged/superseded facts", file=sys.stderr)
+
+        # Log promotions
+        for f in promoted_list:
+            log_event("promoted", f["id"], f"importance={f.get('importance',0):.3f} ref_count={f.get('reference_count',0)}", dry_run=False)
+
+    # ── Report ────────────────────────────────────────────────────────────────
+    print(f"Decayed: {decayed_count} facts")
+    print(f"Promoted: {len(promoted_list)} facts")
+    if promoted_list:
+        for f in promoted_list:
+            print(f"  → [{f.get('category','?')}] {f['content'][:120]}")
+            print(f"     importance={f.get('importance',0):.2f} ref_count={f.get('reference_count',0)}")
+    print()
+
+    print(f"Contradictions detected: {len(contradictions)}")
+    if contradictions:
+        for fa, fb, reason in contradictions:
+            print(f"  ⚠ CONFLICT: {reason}")
+            print(f"    Fact A ({fa['id'][:8]}): {fa['content'][:100]}")
+            print(f"    Fact B ({fb['id'][:8]}): {fb['content'][:100]}")
+    print()
+
+    print(f"Purged: {len(purge_candidates)} facts")
+    if purge_candidates:
+        for f in purge_candidates:
+            eff = f.get("_new_importance", f.get("importance", 0))
+            print(f"  → [{f.get('category','?')}] (score={eff:.3f}) {f['content'][:100]}")
+    print()
+
+    print(f"Permanent tier: {len(permanent_facts)} facts (never touched)")
+    print(f"Standard tier: {len(standard_facts)} facts")
+    print(f"Transient tier: {len(transient_facts)} facts")
+
+    if dry_run:
+        print()
+        print("(DRY RUN complete — no files modified)")
+
+
+if __name__ == "__main__":
+    main()

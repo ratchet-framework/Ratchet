@@ -1,0 +1,365 @@
+#!/usr/bin/env python3
+"""
+memory-retrieve — Retrieve relevant facts for session start.
+
+Loads all facts from memory/facts-*.jsonl, scores by recency + importance,
+then uses an LLM to pick the most relevant for the current session context.
+
+Usage:
+  python3 workspace/bin/memory-retrieve [--context "what's being discussed"] [--top N]
+  python3 workspace/bin/memory-retrieve                   # returns top 15 by score
+  python3 workspace/bin/memory-retrieve --context "WRX"   # LLM picks most relevant
+"""
+
+import os
+import sys
+import json
+import math
+import glob
+import argparse
+from datetime import datetime, timezone, timedelta
+from urllib import request as urlreq
+
+WORKSPACE = "/root/.openclaw/workspace"
+MEMORY_DIR = os.path.join(WORKSPACE, "memory")
+EMBEDDINGS_FILE = os.path.join(MEMORY_DIR, "embeddings.json")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+# Threshold: use semantic search when this many embeddings exist
+EMBEDDING_THRESHOLD = 50
+
+# Decay constant: facts halve in recency score every 30 days
+# λ = ln(2)/30 ≈ 0.023
+DECAY_LAMBDA = 0.023
+
+# Hard token limit for output (~1500 words ≈ 2000 tokens)
+MAX_OUTPUT_WORDS = 1400
+
+def et_today():
+    et = timezone(timedelta(hours=-5))
+    return datetime.now(et).strftime("%Y-%m-%d")
+
+def days_since(date_str, today_str):
+    """Return number of days between date_str and today_str."""
+    try:
+        d1 = datetime.strptime(date_str, "%Y-%m-%d")
+        d2 = datetime.strptime(today_str, "%Y-%m-%d")
+        return max(0, (d2 - d1).days)
+    except Exception:
+        return 30  # default to 30 days if parse fails
+
+def recency_boost(days):
+    """e^(-λ × days) — 1.0 at 0 days, ~0.5 at 30 days."""
+    return math.exp(-DECAY_LAMBDA * days)
+
+def effective_score(fact, today):
+    """Score = base_importance × recency_boost."""
+    base = float(fact.get("importance", 0.5))
+    last_ref = fact.get("last_referenced") or fact.get("created") or today
+    days = days_since(last_ref, today)
+
+    # Permanent tier: no decay
+    if fact.get("tier") == "permanent":
+        return base
+
+    # Transient tier: fast decay (3× rate)
+    if fact.get("tier") == "transient":
+        return base * math.exp(-DECAY_LAMBDA * 3 * days)
+
+    # Superseded facts should score very low
+    if fact.get("superseded_by"):
+        return 0.01
+
+    return base * recency_boost(days)
+
+def load_all_facts():
+    """Load all facts from memory/facts-*.jsonl files."""
+    facts = []
+    pattern = os.path.join(MEMORY_DIR, "facts-*.jsonl")
+    for path in sorted(glob.glob(pattern)):
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    fact = json.loads(line)
+                    facts.append(fact)
+                except json.JSONDecodeError:
+                    pass
+    return facts
+
+def call_anthropic(system_prompt, user_message, model="claude-haiku-4-5"):
+    """Direct Anthropic API call using urllib."""
+    if not ANTHROPIC_API_KEY:
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
+
+    payload = {
+        "model": model,
+        "max_tokens": 2048,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": user_message}],
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urlreq.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+        },
+        method="POST",
+    )
+
+    with urlreq.urlopen(req, timeout=60) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+        return result["content"][0]["text"]
+
+RETRIEVAL_SYSTEM_PROMPT = """You are a context selector for an AI agent named Pawl.
+
+Given a list of facts from previous sessions and the current session's opening context,
+select the 10-15 facts most relevant and useful for the current session.
+
+Prioritize:
+1. Facts directly relevant to the current context/topic
+2. High-importance facts (incidents, decisions, vehicles)
+3. Recently referenced or created facts
+4. Facts that might prevent mistakes or surface important context
+
+Return ONLY a JSON array of fact IDs (the "id" field values), like:
+["uuid1", "uuid2", "uuid3", ...]
+
+No explanation, no markdown, just the JSON array."""
+
+def select_facts_with_llm(facts, context, top_n):
+    """Use LLM to select the most relevant facts given opening context."""
+    # Format facts for the LLM
+    facts_text = []
+    for i, fact in enumerate(facts):
+        line = f'{{"id": "{fact["id"]}", "content": "{fact["content"]}", "category": "{fact.get("category","?")}", "importance": {fact.get("importance",0.5):.1f}, "created": "{fact.get("created","?")}", "last_referenced": "{fact.get("last_referenced","?")}", "tags": {json.dumps(fact.get("tags",[]))}}}'
+        facts_text.append(line)
+
+    facts_list = "\n".join(facts_text)
+    user_message = f"""Opening context for this session: "{context}"
+
+Facts from previous sessions (top 150 by importance × recency):
+{facts_list}
+
+Select the {top_n}-15 most relevant fact IDs for this session."""
+
+    print(f"  [memory-retrieve] Calling LLM to select relevant facts...", file=sys.stderr)
+    raw = call_anthropic(RETRIEVAL_SYSTEM_PROMPT, user_message)
+
+    # Parse the JSON array
+    raw = raw.strip()
+    # Handle if LLM wraps in markdown
+    if raw.startswith("```"):
+        raw = "\n".join(raw.split("\n")[1:])
+    if raw.endswith("```"):
+        raw = "\n".join(raw.split("\n")[:-1])
+    raw = raw.strip()
+
+    selected_ids = json.loads(raw)
+    return selected_ids
+
+# ── Embedding-based retrieval ─────────────────────────────────────────────────
+
+def load_embeddings():
+    """Load embeddings.json. Returns {} if not found."""
+    if not os.path.exists(EMBEDDINGS_FILE):
+        return {}
+    with open(EMBEDDINGS_FILE) as f:
+        return json.load(f)
+
+
+def embed_query_openai(text):
+    """Embed a single query text using OpenAI text-embedding-3-small."""
+    payload = {"model": "text-embedding-3-small", "input": [text]}
+    data = json.dumps(payload).encode("utf-8")
+    req = urlreq.Request(
+        "https://api.openai.com/v1/embeddings",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+        },
+        method="POST",
+    )
+    with urlreq.urlopen(req, timeout=60) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    return result["data"][0]["embedding"]
+
+
+def cosine_similarity(a, b):
+    """Cosine similarity between two vectors (lists of floats)."""
+    try:
+        import numpy as np
+        va, vb = np.array(a), np.array(b)
+        denom = np.linalg.norm(va) * np.linalg.norm(vb)
+        if denom == 0:
+            return 0.0
+        return float(np.dot(va, vb) / denom)
+    except ImportError:
+        # Pure Python fallback
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
+        denom = norm_a * norm_b
+        return dot / denom if denom > 0 else 0.0
+
+
+def select_facts_with_embeddings(facts, context, top_n, embeddings):
+    """
+    Retrieve top_n facts by cosine_similarity × effective_score.
+    Embeds the query text (OpenAI if key available, else TF-IDF).
+    """
+    # Embed the query
+    if OPENAI_API_KEY:
+        query_vec = embed_query_openai(context)
+        method = "OpenAI"
+    else:
+        # TF-IDF fallback: build vocab from all stored embedding texts
+        # We don't have original texts here, so we embed using stored vecs as-is
+        # For query, just do keyword matching against fact content as a fallback
+        print("  [memory-retrieve] No OpenAI key — using score-only (no query embedding)", file=sys.stderr)
+        return None  # fall back to score-based selection
+
+    print(f"  [memory-retrieve] Query embedded via {method}, computing cosine similarity...", file=sys.stderr)
+
+    # Score each fact that has an embedding
+    scored = []
+    for fact in facts:
+        fid = fact.get("id")
+        if fid not in embeddings:
+            continue
+        sim = cosine_similarity(query_vec, embeddings[fid])
+        combined = sim * fact.get("_score", 0.5)
+        scored.append((combined, sim, fact))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [f for _, _, f in scored[:top_n]]
+
+
+def format_output(facts):
+    """Format facts as readable context injection text."""
+    if not facts:
+        return "No relevant facts from previous sessions."
+
+    lines = ["## Known context from previous sessions", ""]
+    for fact in facts:
+        cat = fact.get("category", "?").upper()
+        content = fact.get("content", "")
+        importance = fact.get("importance", 0.5)
+        created = fact.get("created", "?")
+        last_ref = fact.get("last_referenced", "?")
+
+        # Show last_referenced if different from created
+        if last_ref != created:
+            date_info = f"(created {created}, last referenced {last_ref})"
+        else:
+            date_info = f"(from {created})"
+
+        line = f"- **[{cat}]** {content} {date_info}"
+        lines.append(line)
+
+    lines.append("")
+    text = "\n".join(lines)
+
+    # Enforce token budget (rough word count)
+    words = text.split()
+    if len(words) > MAX_OUTPUT_WORDS:
+        # Truncate to budget
+        truncated = " ".join(words[:MAX_OUTPUT_WORDS])
+        text = truncated + "\n\n[... additional facts truncated for token budget]"
+
+    return text
+
+def main():
+    parser = argparse.ArgumentParser(description="Retrieve relevant facts for session start")
+    parser.add_argument("--context", help="Opening context for this session (what's being discussed)")
+    parser.add_argument("--top", type=int, default=15, help="Max facts to return (default: 15)")
+    parser.add_argument("--force-llm", action="store_true", help="Bypass embeddings and use LLM selection")
+    parser.add_argument("--force-embeddings", action="store_true", help="Require embeddings (error if unavailable)")
+    args = parser.parse_args()
+
+    today = et_today()
+
+    # Load all facts
+    all_facts = load_all_facts()
+    if not all_facts:
+        print("No facts stored yet. Run memory-extract after a session to build your fact base.")
+        return
+
+    print(f"  [memory-retrieve] Loaded {len(all_facts)} total facts", file=sys.stderr)
+
+    # Score all facts
+    for fact in all_facts:
+        fact["_score"] = effective_score(fact, today)
+
+    # Sort by score, take top 150
+    scored = sorted(all_facts, key=lambda f: f["_score"], reverse=True)
+    top_150 = scored[:150]
+
+    if not args.context:
+        # No context: return top N by score directly (no LLM call needed)
+        top_facts = top_150[:args.top]
+        print(f"  [memory-retrieve] No context provided — returning top {len(top_facts)} by score", file=sys.stderr)
+    else:
+        # Decide retrieval mode: embeddings vs LLM
+        embeddings = load_embeddings()
+        use_embeddings = (
+            not args.force_llm
+            and (args.force_embeddings or len(embeddings) >= EMBEDDING_THRESHOLD)
+        )
+
+        if args.force_embeddings and len(embeddings) < EMBEDDING_THRESHOLD:
+            print(f"ERROR: --force-embeddings set but only {len(embeddings)} embeddings (threshold: {EMBEDDING_THRESHOLD})", file=sys.stderr)
+            sys.exit(1)
+
+        if use_embeddings:
+            print(f"  [memory-retrieve] Using semantic embeddings ({len(embeddings)} stored)", file=sys.stderr)
+            try:
+                embed_results = select_facts_with_embeddings(top_150, args.context, args.top, embeddings)
+                if embed_results is not None:
+                    top_facts = embed_results
+                    # Pad with top scored if fewer than requested
+                    if len(top_facts) < min(args.top, len(top_150)):
+                        used_ids = {f["id"] for f in top_facts}
+                        for f in top_150:
+                            if len(top_facts) >= args.top:
+                                break
+                            if f["id"] not in used_ids:
+                                top_facts.append(f)
+                else:
+                    # No query embedding available, fall back to score-based
+                    top_facts = top_150[:args.top]
+            except Exception as e:
+                print(f"  [memory-retrieve] Embedding retrieval failed ({e}), falling back to LLM", file=sys.stderr)
+                use_embeddings = False
+
+        if not use_embeddings:
+            # Use LLM to select most relevant given context
+            try:
+                selected_ids = select_facts_with_llm(top_150, args.context, args.top)
+                id_to_fact = {f["id"]: f for f in top_150}
+                top_facts = [id_to_fact[fid] for fid in selected_ids if fid in id_to_fact]
+                # If LLM returned fewer than requested, pad with top scored
+                if len(top_facts) < min(args.top, len(top_150)):
+                    used_ids = {f["id"] for f in top_facts}
+                    for f in top_150:
+                        if len(top_facts) >= args.top:
+                            break
+                        if f["id"] not in used_ids:
+                            top_facts.append(f)
+            except Exception as e:
+                print(f"  [memory-retrieve] LLM selection failed ({e}), falling back to top-N", file=sys.stderr)
+                top_facts = top_150[:args.top]
+
+    output = format_output(top_facts)
+    print(output)
+
+if __name__ == "__main__":
+    main()
