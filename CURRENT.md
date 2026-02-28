@@ -5,78 +5,84 @@ It is the single source of truth for in-flight work. If context compacts, start 
 
 ## Active session
 **Date:** 2026-02-28
-**Status:** Late afternoon — major session complete, one open decision
+**Status:** End of day — compaction test pending
 
-## What shipped today
+## What shipped today (complete)
 
-### Morning briefing upgrades
+### Morning briefing
 - [x] Calendar: today + tomorrow, travel keyword scanning
 - [x] North Star section: 3 mission-aligned actions daily
 - [x] Restart count bug fixed (INC-004)
 
 ### Calendar integration
-- [x] Write scope authorized, 3 recurring events created
+- [x] Write scope authorized, 3 recurring events created (Monthly Milestone, Monthly Sync, Quarterly NS Review)
 - [x] bin/travel-detect: scans 7 days for travel keywords
 - [x] gcal-today: graceful degradation on auth failure
-- [x] INC-006: OAuth client disabled — deferred fix
+- [x] INC-006: OAuth client disabled — deferred, don't rush
 
 ### Vehicle maintenance system
-- [x] vehicles.md: full specs, part numbers, inventory, service history
-- [x] cadence.json: 17 items across WRX/Tacoma/Outback
-- [x] bin/cadence-check: pre-service checklists, "reply when done" prompt
-- [x] bin/cadence-update: one-command service logging
-- [x] bin/travel-detect: calendar travel scan
-- [x] Outback P0141 logged, monitoring
-- [x] Outback rear pads staged, rotors needed
+- [x] vehicles.md: full specs, part numbers, inventory, service history (WRX/Tacoma/Outback)
+- [x] cadence.json: 17 items with thresholds, pre-service checklists
+- [x] bin/cadence-check + bin/cadence-update: one-command service logging
+- [x] Outback P0141 (secondary O2 sensor) logged, monitoring at 88,191 mi
+- [x] Outback rear brakes: pads staged 26696AN00A ✅, rotors still needed
+
+### Session continuity system
+- [x] PROCESS.md: single authoritative process file
+- [x] bin/pre-compaction: verifies state, commits, reports gaps
+- [x] bin/session-start: restores context, surfaces open decisions
+- [x] bin/verify-publish: post-action publish verification, 5 gates, publish-log.json
+- [x] AGENTS.md: all rules updated, no-quick-task-exception enforced
+
+### Ratchet Memory Phase 1 — JUST SHIPPED
+- [x] bin/memory-extract: LLM fact extraction from session transcripts
+- [x] bin/memory-retrieve: scores + retrieves relevant facts for session start
+- [x] memory/facts-2026-Q1.jsonl: 51 facts extracted from today's session
+- [x] Wired into bin/session-start and bin/pre-compaction
+- [x] GitHub Issues #16-19 created (Intelligence milestone)
+- [x] Architecture doc: ratchet/docs/adaptive-memory.md (reviewed by Claude Opus)
 
 ### Growth / Ratchet
 - [x] README overhaul (Issue #14 closed)
-- [x] MIT license added
-- [x] PRs opened: kaushikb11 #77, kyrolabs #155 (Issue #15 closed)
-- [x] Cadence feature card on getratchet.dev
-- [x] publish-process.md documented
-- [x] unlock-capability prints publish checklist
+- [x] MIT license
+- [x] PRs: kaushikb11/awesome-llm-agents #77, kyrolabs/awesome-agents #155 (Issue #15 closed)
+- [x] Cadence + session-continuity feature cards on getratchet.dev
+- [x] publish-process.md, verify-publish wired into pre-compaction + heartbeat
 
-### Process
-- [x] AGENTS.md: parallel execution, routing discipline, vehicle logging, GitHub commit, publish process rules
-- [x] INC-004, INC-005, INC-006 logged
+### Incidents
+- [x] INC-004: briefing restart count (resolved)
+- [x] INC-005: parallel execution promise (resolved)
+- [x] INC-006: Google OAuth disabled (blocked on Aaron)
+- [x] INC-007: parallel execution repeated, P2 (open prevention tasks)
 
-## Open decision (needs Aaron)
-**Process enforcement structure**: Aaron asked "gate during build, or end-of-session?"
-- Option 2 (tool enforcement) partially live: unlock-capability prints checklist
-- Full structural fix pending Aaron's answer
-- Resume: ask Aaron to answer this when next session starts
+## Open — needs Aaron
+- INC-007 prevention tasks: 3 open items (add to PROCESS.md, recurrence detection in metrics)
+- INC-006: fix Google OAuth (Cloud Console, Aaron's action — don't rush)
+- Order WRX filters: 15208AA170, qty 3 (needed before June 2026)
+- Order Outback rear rotors (pads staged, rotors needed)
+- Tacoma service day: parts staged, waiting on weather + open calendar weekend
 
 ## Blocked
-- Google OAuth (INC-006): Cloud Console fix, Aaron's action when ready
-- WRX filter reorder: order 15208AA170 qty 3 before June 2026
-- Outback rear rotors: order before scheduling brake job
-- Tacoma service day: waiting on weather + calendar
-
-## Ratchet Memory Phase 1 — SHIPPED ✅
-- [x] bin/memory-extract: extracts facts from session transcripts via LLM (isolated call)
-- [x] bin/memory-retrieve: retrieves top relevant facts for session start
-- [x] session-start: wired — shows top facts at session start
-- [x] pre-compaction: wired — reminds to run memory-extract after session ends
-- [x] Tested on 2026-02-28.md: 25 facts extracted, retrieval working
-- [x] facts-2026-Q1.jsonl: 25 facts seeded
-- Schema: id, content, category, tags, importance, tier, created, source_session, last_referenced, reference_count, supersedes, superseded_by, promoted, source_trust
-- LLM calls use direct Anthropic API (urllib, no external deps)
-- Next: Phase 2 (decay/promote/manage — Issue #17 → close and open #18)
+- Google Calendar: OAuth client disabled (INC-006)
+- Tacoma service: waiting on weather
 
 ## Next steps (in order)
-1. Answer process enforcement question (Aaron)
-2. Order WRX filters 15208AA170
-3. Order Outback rear rotors
-4. Fix Google OAuth when ready (Cloud Console)
-5. Run memory-extract regularly after sessions to build fact base
-5. Populate demo fixtures for Cadence in Mission Control
-6. Screenshot getratchet.dev cadence card when browser available
+1. **COMPACTION TEST** — new session reads this + memory facts, proves continuity
+2. Ratchet Memory Phase 2: scoring lifecycle, decay, contradiction handling (Issue #18)
+3. INC-007 prevention tasks: update PROCESS.md, add recurrence detection to metrics
+4. Discord integration research + roadmap (Issue TBD)
+5. Second droplet architecture (Issue TBD)
+6. Screenshot session-continuity + cadence cards for getratchet.dev
 
 ## Resume instructions (after compaction)
-1. Read SOUL.md, USER.md, MEMORY.md
-2. Read this file
-3. Read memory/2026-02-28.md for full session detail
-4. First: ask Aaron about process enforcement structure (open decision above)
-5. Vehicle service logging: run cadence-update silently when Aaron reports service done
-6. Cadence IDs: `cadence-update --list` to see all
+1. Run `python3 workspace/bin/session-start` — reads this file, surfaces open decisions, loads memory facts
+2. First message to Aaron: "I'm back. Here's what I have from the last session." Then show session-start output.
+3. Vehicle service logging rule: run cadence-update silently when Aaron reports a service done
+4. INC-007 has 3 open prevention tasks — work autonomously: update PROCESS.md, add recurrence detection
+5. Ratchet Memory Phase 1 is live: 51 facts in memory/facts-2026-Q1.jsonl
+6. Phase 2 is next when Aaron says go
+
+## The memory test
+This is the first session where Ratchet Memory Phase 1 is active.
+If session-start surfaces relevant facts from today without Aaron re-explaining them — the test passes.
+Watch for: Tacoma brakes (overdue), WRX filter (0 in stock), INC-007, Outback O2 sensor monitoring.
