@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — Tasks
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-tasks-mobile.png) | ![desktop](screenshots/mission-control-tasks-desktop.png) |
+
 ## Mission Control — Cron Jobs
 _2026-02-28_
 
