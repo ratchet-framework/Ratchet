@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — System
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-system-mobile.png) | ![desktop](screenshots/mission-control-system-desktop.png) |
+
 ## Mission Control — Memory
 _2026-02-28_
 
