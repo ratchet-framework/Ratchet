@@ -311,3 +311,89 @@ Key insight from all prior art: **everyone converges on three retrieval signals:
 | Facts promoted to MEMORY.md | manual | automatic | automatic |
 | Retrieval relevance | subjective | measurable | cosine score ✅ |
 | Token budget compliance | hard cap | hard cap | hard cap |
+
+---
+
+## Phase 4: Semantic Retrieval at Scale
+
+**Status:** Shipped (2026-02-28)
+**GitHub Issue:** #TBD
+
+Phase 4 extends semantic search from *facts* to the *entire workspace* — incidents, docs, memory logs, process files — and adds pattern detection: the ability to recognize when the same class of mistake is recurring across different contexts.
+
+### What was built
+
+| Script | Purpose |
+|--------|---------|
+| `bin/workspace-index` | Embed all workspace docs → `memory/workspace-index.json` |
+| `bin/memory-link` | Given a fact/query, surface top-N most similar workspace docs |
+| `bin/pattern-detect` | Cluster incidents, detect risk factors, generate recommendations |
+
+**New page:** `/insights` in Mission Control — pattern clusters, risk factors, decision themes, recommendation engine.
+
+### Workspace indexing strategy
+
+`workspace-index` scans:
+- `incidents/INC-*.md` → type: `incident`
+- `ratchet/docs/*.md` → type: `doc`
+- `memory/*.md`, `memory/*.jsonl` → type: `memory`
+- `PROCESS.md`, `AGENTS.md`, `SECURITY.md`, etc. → type: `process`
+- Reports, runbooks, ops docs → type: `doc`
+
+Each file gets:
+- Content preview (500 chars) — human-readable, editable
+- SHA hash for incremental updates (re-embed only changed files)
+- Embedding vector (OpenAI 1536-dim or TF-IDF 128-dim fallback)
+
+The index (`memory/workspace-index.json`) is intentionally human-editable: you can exclude files or re-weight document types by editing the JSON directly.
+
+### Pattern detection algorithm
+
+`pattern-detect` runs weekly (Friday review):
+
+1. **Load incidents** — parse all `INC-*.md` files
+2. **Embed** — OpenAI batch or TF-IDF fallback
+3. **Cluster** — greedy cosine similarity clustering (threshold: 0.45)
+4. **Theme detection** — keyword heuristics across risk factor taxonomy
+5. **LLM synthesis** — Claude Haiku summarizes the connecting pattern for clusters ≥2
+6. **Risk factors** — percentage of incidents containing each factor (time pressure, context switching, external communication, missing review, repeated class, trust assumption)
+7. **Decision themes** — keyword frequency across MEMORY.md
+8. **Recommendations** — rule-based suggestions based on detected patterns
+
+Output: `memory/patterns.json` — consumed by `/insights` page.
+
+### memory-link integration
+
+After `memory-extract` runs on a session, it automatically calls `memory-link` with the first extracted fact as anchor. This surfaces related incidents/docs in real time, closing the loop:
+
+```
+Session ends → extract facts → embed facts → link to workspace context → surface patterns
+```
+
+### /insights page
+
+Read-only analytics view in Mission Control:
+- **Pattern clusters** — groups of related incidents with similarity scores and LLM analysis
+- **Risk factors** — percentage breakdown across all incidents
+- **Decision themes** — recurring patterns in MEMORY.md
+- **Recommendations** — prioritized improvement suggestions
+- **Workspace index** — document count breakdown by type
+
+Patterns are computed weekly by `pattern-detect`, not real-time. The page reflects the last computed state.
+
+### Updated data files
+
+| File | Phase | Purpose |
+|------|-------|---------|
+| `memory/workspace-index.json` | 4 | Embeddings for all workspace docs |
+| `memory/patterns.json` | 4 | Cluster analysis, risk factors, recommendations |
+
+### Updated success metrics
+
+| Metric | Target |
+|--------|--------|
+| Documents indexed | ≥79 |
+| Pattern clusters detected | ≥1 per weekly review |
+| Risk factor coverage | All 6 categories |
+| Recommendation precision | ≥80% actionable |
+| memory-link relevance | INC related to query in top-3 |
