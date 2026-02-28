@@ -120,6 +120,13 @@
           "description": "When Pawl ships UI changes, it screenshots and commits visual proof to the repo automatically. GALLERY.md tracks the full visual history.",
           "status": "unlocked",
           "unlockedAt": "2026-02-27"
+        },
+        {
+          "id": "trust-tiers",
+          "label": "Trust tiers",
+          "description": "Evidence-based autonomy expansion. T1-T5 tiers unlock as competence is demonstrated. Metrics drive advancement. P1 incidents trigger regression. Aaron confirms each step.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         }
       ]
     },
