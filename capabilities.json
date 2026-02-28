@@ -106,6 +106,13 @@
           "description": "Tasks routed to cheapest model that handles them well. Savings compound over time.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
+        },
+        {
+          "id": "session-continuity",
+          "label": "Session continuity",
+          "description": "Work survives compaction. CURRENT.md in GitHub tracks in-flight state. Next session resumes autonomously.",
+          "status": "unlocked",
+          "unlockedAt": "2026-02-28"
         }
       ]
     },
