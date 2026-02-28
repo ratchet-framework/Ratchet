@@ -1,5 +1,12 @@
 # Gallery
 
+## Mission Control — Home (demo)
+_2026-02-28_
+
+| Mobile | Desktop |
+|--------|--------|
+| ![mobile](screenshots/mission-control-home-mobile.png) | ![desktop](screenshots/mission-control-home-desktop.png) |
+
 Visual record of what Pawl built and shipped.
 
 Only public-safe screenshots are committed here (getratchet.dev + system health).
