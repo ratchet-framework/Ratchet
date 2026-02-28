@@ -14,9 +14,9 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - [x] MobileShell component created
 - [x] Dashboard, Cron, System pages updated
 - [x] Tasks page wired to real API
-- [ ] Documents page — MobileShell not yet applied
-- [ ] Memories page — MobileShell not yet applied
-- [ ] Auto-refresh (60s poll) on documents + memories pages
+- [ ] Documents page — MobileShell not yet applied (Issue #6)
+- [ ] Memories page — MobileShell not yet applied (Issue #6)
+- [ ] Auto-refresh (60s poll) on documents + memories pages (Issue #7)
 
 ### Ratchet framework
 - [x] Cost routing primitive + cost-log tool
@@ -24,7 +24,7 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - [x] Notification routing primitive
 - [x] Capability dashboard live at getratchet.dev/dashboard.html
 - [ ] Cadence data: needs Aaron's vehicle mileage + last service dates
-- [ ] GitHub Issues: BACKLOG.md items not yet mirrored as Issues
+- [x] GitHub Issues: active items mirrored as Issues #6-10
 
 ## Next steps (in order)
 1. Apply MobileShell to Documents page
