@@ -25,6 +25,15 @@ It is the single source of truth for in-flight work. If context compacts, start 
 - [x] GitHub Issues #6, #7 closed; #8-10 open
 - [x] Capabilities: 26/33 unlocked
 
+## Security review (required before next build)
+
+All future capabilities must pass the security gate in AGENTS.md before code is written.
+THREAT-MODEL.md now has a "Proposed Capabilities" queue — new ideas go there first.
+
+Next items cleared:
+- Travel detection (Issue #9): cleared with mitigations (calendar titles untrusted, Aaron confirms context.json changes)
+- Web content fetching (Issue #10): cleared with mitigations (isolated sessions, untrusted delimiters, no autonomous action)
+
 ## Next steps (in order)
 1. Cadence data: Aaron to provide vehicle mileage + last service dates (Issue #8)
 2. Travel detection automation (Issue #9)
