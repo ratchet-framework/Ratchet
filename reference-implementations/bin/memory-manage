@@ -88,26 +88,26 @@ def load_all_facts():
     return result
 
 
-def apply_decay(fact, today):
+def compute_effective_score(fact, today):
     """
-    Apply weekly decay to a fact's importance in-place.
-    Returns (new_importance, weeks_applied, was_decayed).
-    Permanent tier: no decay.
+    Compute effective score for a fact WITHOUT modifying stored importance.
+    Decay is a retrieval-time concern — stored importance is immutable.
+    Returns (effective_score, weeks_elapsed).
     """
     tier = fact.get("tier", "standard")
+    base = fact["importance"]
+
     if tier == "permanent":
-        return fact["importance"], 0, False
+        return base, 0
 
     last_ref = fact.get("last_referenced") or fact.get("created") or today
     w = weeks_since(last_ref, today)
     if w <= 0:
-        return fact["importance"], 0, False
+        return base, 0
 
     rate = DECAY_STANDARD if tier == "standard" else DECAY_TRANSIENT
-    # Apply decay for each week since last referenced
-    new_importance = fact["importance"] * (rate ** w)
-    new_importance = max(0.0, min(1.0, new_importance))
-    return new_importance, w, True
+    effective = base * (rate ** w)
+    return max(0.0, min(1.0, effective)), w
 
 
 def detect_contradictions(all_facts):
@@ -251,25 +251,19 @@ def main():
     standard_facts = [f for f in all_facts if f.get("tier", "standard") == "standard"]
     transient_facts = [f for f in all_facts if f.get("tier") == "transient"]
 
-    # ── Decay ────────────────────────────────────────────────────────────────
-    decayed_count = 0
-    decayed_facts = []  # track for reporting
-
+    # ── Compute effective scores (read-only, never written back) ─────────────
     for fact in all_facts:
-        new_imp, weeks, was_decayed = apply_decay(fact, today)
-        if was_decayed and abs(new_imp - fact["importance"]) > 0.001:
-            old_imp = fact["importance"]
-            fact["_new_importance"] = new_imp
-            fact["_old_importance"] = old_imp
-            decayed_count += 1
-            decayed_facts.append(fact)
+        eff, weeks = compute_effective_score(fact, today)
+        fact["_effective_score"] = eff
+        fact["_decay_weeks"] = weeks
 
-    # ── Promotion ────────────────────────────────────────────────────────────
+    # ── Promotion (based on stored importance, not decayed) ─────────────────
     promoted_list = []
     for fact in all_facts:
         if fact.get("promoted"):
             continue  # already promoted
-        imp = fact.get("_new_importance", fact.get("importance", 0))
+        # Use stored importance (immutable) for promotion decisions
+        imp = fact.get("importance", 0)
         ref_count = fact.get("reference_count", 0)
         if imp > PROMOTION_IMPORTANCE and ref_count >= PROMOTION_REFS:
             promoted_list.append(fact)
@@ -277,22 +271,21 @@ def main():
     # ── Contradiction detection ───────────────────────────────────────────────
     contradictions = detect_contradictions(all_facts)
 
-    # ── Purge candidates ─────────────────────────────────────────────────────
+    # ── Purge candidates (based on computed effective score, never stored) ───
     purge_candidates = []
     for fact in all_facts:
         if fact.get("tier") == "permanent":
             continue
-        eff_imp = fact.get("_new_importance", fact.get("importance", 0))
+        eff_imp = fact.get("_effective_score", fact.get("importance", 0))
         if eff_imp < PURGE_THRESHOLD:
             purge_candidates.append(fact)
 
     # ── Apply changes (unless dry-run) ────────────────────────────────────────
+    # NOTE: stored importance is NEVER modified. Only promotions, purges,
+    # and last_managed are written. Decay is computed at retrieval time.
     if not dry_run:
-        # Apply decayed importance values
-        # We need to rewrite the JSONL files with updated importance
-        # Per constraint: append-only EXCEPT for purge. So decay updates
-        # are written in-place via temp file swap (same mechanism as purge).
         purge_ids = {f["id"] for f in purge_candidates}
+        promoted_ids = {f["id"] for f in promoted_list}
 
         for path, file_facts in facts_by_file.items():
             updated = False
@@ -300,26 +293,25 @@ def main():
             for fact in file_facts:
                 fid = fact.get("id")
                 if fid in purge_ids:
+                    updated = True
                     continue  # exclude purged facts
 
-                # Apply decay
-                if "_new_importance" in fact:
-                    fact["importance"] = fact["_new_importance"]
-                    del fact["_new_importance"]
-                    if "_old_importance" in fact:
-                        del fact["_old_importance"]
+                # Apply promotion
+                if fid in promoted_ids and not fact.get("promoted"):
+                    fact["promoted"] = True
                     updated = True
 
-                # Apply promotion
-                for pf in promoted_list:
-                    if pf["id"] == fid and not fact.get("promoted"):
-                        fact["promoted"] = True
-                        updated = True
-                        break
+                # Update last_managed timestamp
+                fact["last_managed"] = today
+                updated = True
+
+                # Clean up any transient scoring keys
+                fact.pop("_effective_score", None)
+                fact.pop("_decay_weeks", None)
 
                 new_lines.append(fact)
 
-            if updated or purge_ids:
+            if updated:
                 fd, tmp_path = tempfile.mkstemp(dir=MEMORY_DIR, prefix="facts-tmp-")
                 try:
                     with os.fdopen(fd, "w") as f:
@@ -349,7 +341,8 @@ def main():
             log_event("promoted", f["id"], f"importance={f.get('importance',0):.3f} ref_count={f.get('reference_count',0)}", dry_run=False)
 
     # ── Report ────────────────────────────────────────────────────────────────
-    print(f"Decayed: {decayed_count} facts")
+    decayed_facts = [f for f in all_facts if f.get("_decay_weeks", 0) > 0 and f.get("_effective_score", 1) < f.get("importance", 1)]
+    print(f"Decayed (computed, not stored): {len(decayed_facts)} facts")
     print(f"Promoted: {len(promoted_list)} facts")
     if promoted_list:
         for f in promoted_list:
@@ -368,7 +361,7 @@ def main():
     print(f"Purged: {len(purge_candidates)} facts")
     if purge_candidates:
         for f in purge_candidates:
-            eff = f.get("_new_importance", f.get("importance", 0))
+            eff = f.get("_effective_score", f.get("importance", 0))
             print(f"  → [{f.get('category','?')}] (score={eff:.3f}) {f['content'][:100]}")
     print()
 

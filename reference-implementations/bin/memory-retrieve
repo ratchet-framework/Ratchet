@@ -29,9 +29,9 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 # Threshold: use semantic search when this many embeddings exist
 EMBEDDING_THRESHOLD = 50
 
-# Decay constant: facts halve in recency score every 30 days
-# λ = ln(2)/30 ≈ 0.023
-DECAY_LAMBDA = 0.023
+# Decay rates per week (must match memory-manage)
+DECAY_STANDARD = 0.95
+DECAY_TRANSIENT = 0.80
 
 # Hard token limit for output (~1500 words ≈ 2000 tokens)
 MAX_OUTPUT_WORDS = 1400
@@ -49,29 +49,32 @@ def days_since(date_str, today_str):
     except Exception:
         return 30  # default to 30 days if parse fails
 
-def recency_boost(days):
-    """e^(-λ × days) — 1.0 at 0 days, ~0.5 at 30 days."""
-    return math.exp(-DECAY_LAMBDA * days)
-
 def effective_score(fact, today):
-    """Score = base_importance × recency_boost."""
+    """
+    Score = stored_importance × decay_factor.
+    Decay is computed here at retrieval time — never written back to storage.
+    Uses the same formula as memory-manage's compute_effective_score.
+    """
     base = float(fact.get("importance", 0.5))
     last_ref = fact.get("last_referenced") or fact.get("created") or today
-    days = days_since(last_ref, today)
+    weeks = days_since(last_ref, today) / 7.0
+
+    tier = fact.get("tier", "standard")
 
     # Permanent tier: no decay
-    if fact.get("tier") == "permanent":
+    if tier == "permanent":
         return base
-
-    # Transient tier: fast decay (3× rate)
-    if fact.get("tier") == "transient":
-        return base * math.exp(-DECAY_LAMBDA * 3 * days)
 
     # Superseded facts should score very low
     if fact.get("superseded_by"):
         return 0.01
 
-    return base * recency_boost(days)
+    # Transient tier: fast decay
+    if tier == "transient":
+        return base * (DECAY_TRANSIENT ** weeks)
+
+    # Standard tier
+    return base * (DECAY_STANDARD ** weeks)
 
 def load_all_facts():
     """Load all facts from memory/facts-*.jsonl files."""
