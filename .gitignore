@@ -1,7 +1,20 @@
-# Secrets and credentials
+# Private operational files — never commit these
+memory/
+workspace-index.json
+embeddings.json
+facts-*.jsonl
+facts-purged.jsonl
+facts-rejected.jsonl
+extraction-errors.jsonl
+memory-log.jsonl
+patterns.json
 *.env
-.env.*
 secrets/
+MEMORY.md
+trust.json
+
+# Secrets and credentials
+.env.*
 credentials/
 
 # Personal context — never commit real user data
