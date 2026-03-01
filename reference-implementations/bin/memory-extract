@@ -26,6 +26,34 @@ WORKSPACE = "/root/.openclaw/workspace"
 MEMORY_DIR = os.path.join(WORKSPACE, "memory")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
+# --- Schema definition ---
+ALLOWED_CATEGORIES = [
+    'vehicle', 'incident', 'decision', 'preference',
+    'process', 'person', 'project', 'system'
+]
+
+ALLOWED_TIERS = ['permanent', 'standard', 'transient']
+
+REQUIRED_FIELDS = {
+    'id': str,
+    'content': str,
+    'category': str,
+    'importance': (int, float),
+    'tier': str,
+    'created': str,
+    'source_session': str,
+    'tags': list,
+}
+
+OPTIONAL_FIELDS_WITH_DEFAULTS = {
+    'last_referenced': None,
+    'reference_count': 0,
+    'supersedes': None,
+    'superseded_by': None,
+    'promoted': False,
+    'source_trust': 'trusted',
+}
+
 # Credential patterns to filter extracted facts
 CREDENTIAL_PATTERNS = [
     r'sk-ant-api[0-9a-zA-Z-]+',
@@ -39,7 +67,11 @@ CREDENTIAL_PATTERNS = [
     r'secret\s*[:=]\s*\S+',
 ]
 
-CATEGORIES = ["vehicle", "incident", "decision", "preference", "process", "person", "project", "system"]
+CREDENTIAL_KEYWORDS = ['sk-', 'ghp_', 'api key', 'password', 'token', 'secret_key']
+CREDENTIAL_PATH_PATTERNS = [r'\.env\b', r'secrets/', r'\.openclaw/secrets/']
+
+# Legacy alias
+CATEGORIES = ALLOWED_CATEGORIES
 
 DEFAULT_IMPORTANCE = {
     "incident": 0.9,
@@ -152,15 +184,127 @@ Each object must match this schema exactly:
 
 If the transcript contains NO extractable facts, output exactly: []"""
 
-def contains_credential(text):
-    """Return True if text contains a credential pattern."""
+DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+LONG_ALNUM_RE = re.compile(r'[A-Za-z0-9_\-]{20,}')
+
+
+def validate_fact(fact):
+    """Validate a fact dict. Returns (True, '') or (False, reason)."""
+    if not isinstance(fact, dict):
+        return False, "not a dict"
+
+    for field, expected_type in REQUIRED_FIELDS.items():
+        if field not in fact:
+            return False, f"missing required field: {field}"
+        val = fact[field]
+        if not isinstance(val, expected_type if isinstance(expected_type, tuple) else (expected_type,)):
+            return False, f"field '{field}' has wrong type: expected {expected_type}, got {type(val).__name__}"
+
+    # id: non-empty, UUID format
+    if not fact['id'] or not UUID_RE.match(str(fact['id'])):
+        return False, f"invalid id (not UUID format): {str(fact['id'])[:40]}"
+
+    # content: non-empty, min 10 chars
+    if not fact['content'] or len(fact['content'].strip()) < 10:
+        return False, f"content too short ({len(fact.get('content', ''))} chars, need >= 10)"
+
+    # category
+    if fact['category'] not in ALLOWED_CATEGORIES:
+        return False, f"invalid category: {fact['category']}"
+
+    # importance: 0.0-1.0
+    imp = fact['importance']
+    if not (0.0 <= float(imp) <= 1.0):
+        return False, f"importance out of range: {imp}"
+
+    # tier
+    if fact['tier'] not in ALLOWED_TIERS:
+        return False, f"invalid tier: {fact['tier']}"
+
+    # created: YYYY-MM-DD
+    if not DATE_RE.match(fact['created']):
+        return False, f"invalid created date: {fact['created']}"
+
+    # source_session: non-empty
+    if not fact['source_session']:
+        return False, "empty source_session"
+
+    # tags: list of strings
+    if not isinstance(fact['tags'], list):
+        return False, "tags is not a list"
+    for t in fact['tags']:
+        if not isinstance(t, str):
+            return False, f"tag is not a string: {t}"
+
+    return True, ""
+
+
+def credential_filter(fact):
+    """Return True if fact should be REJECTED due to credential-like content."""
+    content = fact.get('content', '')
+    text = json.dumps(fact)  # check all fields
+
+    # Regex patterns
     for pattern in CREDENTIAL_PATTERNS:
         if re.search(pattern, text, re.IGNORECASE):
             return True
+
+    # Keyword check in content
+    content_lower = content.lower()
+    for kw in CREDENTIAL_KEYWORDS:
+        if kw in content_lower:
+            return True
+
+    # Secret file paths
+    for pattern in CREDENTIAL_PATH_PATTERNS:
+        if re.search(pattern, content):
+            return True
+
+    # Long alphanumeric strings that look like keys (only in content)
+    for match in LONG_ALNUM_RE.finditer(content):
+        token = match.group()
+        # Skip common non-secret patterns (UUIDs, dates, words)
+        if UUID_RE.match(token):
+            continue
+        # If it has mixed case + digits, likely a key
+        has_upper = any(c.isupper() for c in token)
+        has_lower = any(c.islower() for c in token)
+        has_digit = any(c.isdigit() for c in token)
+        if has_upper and has_lower and has_digit and len(token) > 24:
+            return True
+
     return False
 
+
+def log_rejected_fact(fact, reason):
+    """Log a rejected fact to facts-rejected.jsonl for audit."""
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    rejected_path = os.path.join(MEMORY_DIR, "facts-rejected.jsonl")
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+        "fact": fact,
+    }
+    with open(rejected_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def log_extraction_error(raw_response, error_msg):
+    """Log unparseable LLM responses for debugging."""
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    error_path = os.path.join(MEMORY_DIR, "extraction-errors.jsonl")
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "error": error_msg,
+        "raw_response": raw_response[:2000],
+    }
+    with open(error_path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
 def extract_facts(transcript, session_date):
-    """Call LLM to extract facts from transcript. Returns list of fact dicts."""
+    """Call LLM to extract facts from transcript. Returns (facts, stats) where
+    stats = {'rejected_validation': int, 'rejected_credentials': int}."""
     user_message = f"""TRANSCRIPT (session date: {session_date}):
 
 ---
@@ -170,69 +314,109 @@ def extract_facts(transcript, session_date):
 Extract all factual statements per the rules above. Output JSONL only."""
 
     print(f"  [memory-extract] Calling LLM to extract facts...", file=sys.stderr)
-    raw = call_anthropic(EXTRACTION_SYSTEM_PROMPT, user_message)
+
+    try:
+        raw = call_anthropic(EXTRACTION_SYSTEM_PROMPT, user_message)
+    except RuntimeError as e:
+        print(f"WARNING: LLM call failed: {e}", file=sys.stderr)
+        return [], {'rejected_validation': 0, 'rejected_credentials': 0}
+
+    # Check if the response has ANY parseable JSON lines
+    parseable_lines = 0
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line or line == "[]" or line.startswith("```") or line.startswith("//") or line.startswith("#"):
+            continue
+        try:
+            json.loads(line)
+            parseable_lines += 1
+        except json.JSONDecodeError:
+            pass
+
+    if parseable_lines == 0 and raw.strip() and raw.strip() != "[]":
+        print(f"WARNING: LLM returned unparseable response, 0 facts extracted", file=sys.stderr)
+        log_extraction_error(raw, "No parseable JSONL lines found")
+        return [], {'rejected_validation': 0, 'rejected_credentials': 0}
 
     # Parse JSONL output
     facts = []
+    seen_ids = set()
+    stats = {'rejected_validation': 0, 'rejected_credentials': 0}
+
     for line in raw.splitlines():
         line = line.strip()
         if not line or line == "[]":
             continue
-        # Skip markdown code fences
         if line.startswith("```") or line.startswith("//") or line.startswith("#"):
             continue
         try:
             fact = json.loads(line)
         except json.JSONDecodeError:
             print(f"  [memory-extract] WARN: skipping unparseable line: {line[:80]}", file=sys.stderr)
+            log_extraction_error(line, "Single line JSON parse failure")
             continue
 
-        # Validate required fields
-        required = ["content", "category", "importance"]
-        if not all(k in fact for k in required):
-            print(f"  [memory-extract] WARN: skipping fact missing required fields: {line[:80]}", file=sys.stderr)
+        if not isinstance(fact, dict):
+            print(f"  [memory-extract] WARN: skipping non-dict JSON value", file=sys.stderr)
             continue
 
-        # Post-extraction filter: reject credential patterns
-        if contains_credential(json.dumps(fact)):
-            print(f"  [memory-extract] WARN: rejected fact containing credential pattern", file=sys.stderr)
-            continue
-
-        # Ensure all schema fields are present
+        # --- Set defaults for missing optional/required fields before validation ---
         fact.setdefault("id", str(uuid.uuid4()))
         fact.setdefault("tags", [])
         fact.setdefault("tier", "standard")
         fact.setdefault("created", session_date)
         fact.setdefault("source_session", session_date)
-        fact.setdefault("last_referenced", session_date)
-        fact.setdefault("reference_count", 0)
-        fact.setdefault("supersedes", None)
-        fact.setdefault("superseded_by", None)
-        fact.setdefault("promoted", False)
-        fact.setdefault("source_trust", "trusted")
 
-        # Normalize category
-        if fact["category"] not in CATEGORIES:
+        # Normalize category before validation
+        if fact.get("category") and fact["category"] not in ALLOWED_CATEGORIES:
             fact["category"] = "system"
+
+        # Ensure importance is numeric
+        try:
+            fact["importance"] = float(fact.get("importance", 0.5))
+        except (ValueError, TypeError):
+            fact["importance"] = 0.5
+
+        # --- Step 1: Schema validation ---
+        valid, reason = validate_fact(fact)
+        if not valid:
+            print(f"  [memory-extract] WARN: rejected fact (validation: {reason}): {str(fact.get('content', ''))[:60]}", file=sys.stderr)
+            log_rejected_fact(fact, f"validation: {reason}")
+            stats['rejected_validation'] += 1
+            continue
+
+        # --- Step 2: Credential filter ---
+        if credential_filter(fact):
+            print(f"  [memory-extract] WARN: rejected fact (credential pattern detected)", file=sys.stderr)
+            log_rejected_fact(fact, "credential pattern detected")
+            stats['rejected_credentials'] += 1
+            continue
+
+        # --- Step 3: Duplicate ID check ---
+        if fact['id'] in seen_ids:
+            fact['id'] = str(uuid.uuid4())
+        seen_ids.add(fact['id'])
+
+        # --- Step 4: Set defaults for optional fields ---
+        for field, default in OPTIONAL_FIELDS_WITH_DEFAULTS.items():
+            if field == 'last_referenced':
+                fact.setdefault(field, fact['created'])
+            else:
+                fact.setdefault(field, default)
 
         # --- Tier detection (programmatic enforcement) ---
         content_lower = fact["content"].lower()
 
-        # Permanent tier keywords
         PERMANENT_KEYWORDS = ["always remember", "never forget", "permanent"]
-        # Transient tier keywords
         TRANSIENT_KEYWORDS = ["temporary", "just for now", "this session"]
 
         if any(kw in content_lower for kw in PERMANENT_KEYWORDS):
             fact["tier"] = "permanent"
         elif any(kw in content_lower for kw in TRANSIENT_KEYWORDS):
             fact["tier"] = "transient"
-        # Otherwise keep whatever the LLM set (defaulted to "standard")
 
         # --- Importance modifier enforcement ---
-        # "remember this" / explicit user marking: +0.2
         REMEMBER_KEYWORDS = ["remember this", "always remember", "never forget", "permanent"]
-        # Action-required: +0.15
         ACTION_KEYWORDS = ["overdue", "urgent", "action required", "order", "fix"]
 
         imp = float(fact["importance"])
@@ -240,14 +424,11 @@ Extract all factual statements per the rules above. Output JSONL only."""
             imp = min(1.0, imp + 0.2)
         if any(kw in content_lower for kw in ACTION_KEYWORDS):
             imp = min(1.0, imp + 0.15)
-        fact["importance"] = imp
-
-        # Normalize importance bounds
-        fact["importance"] = max(0.0, min(1.0, float(fact["importance"])))
+        fact["importance"] = max(0.0, min(1.0, imp))
 
         facts.append(fact)
 
-    return facts
+    return facts, stats
 
 def append_facts(facts, quarter):
     """Append facts to the quarterly JSONL file."""
@@ -292,18 +473,25 @@ def main():
     print(f"  [memory-extract] Session: {session_date}, Quarter: {quarter}", file=sys.stderr)
     print(f"  [memory-extract] Transcript: {len(transcript)} chars", file=sys.stderr)
 
-    facts = extract_facts(transcript, session_date)
+    facts, stats = extract_facts(transcript, session_date)
 
     if not facts:
         print("  [memory-extract] No facts extracted.", file=sys.stderr)
-        print("✅ 0 facts extracted (nothing to append)")
+        print(f"Extracted: 0 facts")
+        print(f"Rejected (validation): {stats['rejected_validation']} facts")
+        print(f"Rejected (credentials): {stats['rejected_credentials']} facts")
         return
 
     outfile = append_facts(facts, quarter)
-    print(f"✅ {len(facts)} facts extracted → {outfile}")
+
+    # --- Reporting ---
+    print(f"\nExtracted: {len(facts)} facts")
+    print(f"Rejected (validation): {stats['rejected_validation']} facts")
+    print(f"Rejected (credentials): {stats['rejected_credentials']} facts")
+    print(f"Written to: {outfile}")
 
     # Print a summary of extracted facts
-    print(f"\nExtracted facts:")
+    print(f"\nFact details:")
     for fact in facts:
         importance = fact.get("importance", 0)
         category = fact.get("category", "?")
@@ -324,6 +512,25 @@ def main():
     except Exception as e:
         if verbose:
             print(f"  [memory-extract] Embedding step skipped: {e}", file=sys.stderr)
+
+    # Phase 4: Surface related workspace context for newly extracted facts
+    try:
+        import subprocess
+        link_cmd = [sys.executable, os.path.join(WORKSPACE, "bin", "memory-link")]
+        # Use first fact as anchor query (most important or first extracted)
+        anchor = facts[0].get("content", "") if facts else ""
+        if anchor:
+            result = subprocess.run(
+                link_cmd + ["--query", anchor[:200], "--top", "3"],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.stdout.strip():
+                print("\n🔗 Related context:")
+                for line in result.stdout.strip().splitlines():
+                    print(f"  {line}")
+    except Exception as e:
+        if verbose:
+            print(f"  [memory-extract] memory-link step skipped: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
