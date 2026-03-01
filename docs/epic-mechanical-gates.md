@@ -2,7 +2,7 @@
 
 **Author:** Claude Opus (engineering review)  
 **Date:** 2026-03-01  
-**Status:** Proposal  
+**Status:** Shipped ✅ (2026-03-01, sub-agent: epic-1-mechanical-gates)  
 **Relates to:** INC-003, INC-005, INC-007, engineering-review-2026-03-01.md
 
 ---

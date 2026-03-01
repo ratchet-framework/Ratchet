@@ -89,6 +89,40 @@
 - Publish verification: all verified
 - Watchdog health: ✅ OK
 
+## Epic 1: Mechanical Gates — SHIPPED ✅
+
+### What was built (sub-agent: epic-1-mechanical-gates, 2026-03-01)
+
+**Gate 1: Public repo content gate (extended)**
+- Pre-commit hook now scans file CONTENT for private workspace references: MEMORY.md, SECURITY.md, THREAT-MODEL.md, trust.json, incidents/INC-, /memory/YYYY-MM
+- Also blocks the droplet's public IP (64.225.15.45) in addition to RFC-1918 ranges
+- Mirrored all new content checks to `.github/workflows/check-private-files.yml`
+- Tested: commit blocked when file contains "MEMORY.md" reference ✅
+
+**Gate 2: Parallel execution audit**
+- New `bin/parallel-audit` — reads session .jsonl logs, detects inline research/analysis patterns
+  - Thresholds: 3+ web calls, 5+ reads, 15+ tool calls without user input
+  - Falls back to self-report prompt if logs unavailable
+- Integrated into `bin/pre-compaction` (section 10) — runs at every compaction
+- Violation state saved to `memory/parallel-audit-state.json`
+- `bin/session-start` injects warning when previous session had violations
+- Tested: detects 9 violations in known heavy session ✅
+
+**Gate 3: Security review audit**
+- Added to `bin/pre-compaction` (section 11)
+- Detects new `bin/` or `ratchet/` files since last commit
+- Warns if `## Security review` or "No sensitive data" not in CURRENT.md
+- Tested: fires for `bin/crashloop-alert` (new file without review marker) ✅
+
+## Security review
+
+Epic 1 mechanical gates:
+- Touch: session logs (read-only), git staged files (read-only), CURRENT.md (read), state file (write to memory/)
+- Expose: stdout only, no network calls, no secrets
+- External input: staged file content scanned via regex — no exec, no shell injection
+- Execute: git commands via subprocess with no user-controlled strings in shell invocations
+- Blast radius: low — worst case is false-positive block or missed violation. No data exfiltration risk.
+
 ## Next Steps (Priority Order)
 1. **Discord setup** — high value, Aaron-initiated, ~30 min
 2. **Part orders** — at Aaron's discretion (links ready in memory/order-links.md)
