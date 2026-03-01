@@ -123,6 +123,10 @@ Epic 1 mechanical gates:
 - Execute: git commands via subprocess with no user-controlled strings in shell invocations
 - Blast radius: low — worst case is false-positive block or missed violation. No data exfiltration risk.
 
+## Open Decisions / Blockers
+
+- **`check-private-files.yml` update pending push** — PAT `pawl-github` lacks `workflow` scope. The workflow file has the new content checks (private workspace refs, droplet IP, emails) locally in `ratchet/` but cannot be pushed to GitHub. Aaron needs to either grant `workflow` scope to the PAT or push manually. Local pre-commit hook is fully functional.
+
 ## Next Steps (Priority Order)
 1. **Discord setup** — high value, Aaron-initiated, ~30 min
 2. **Part orders** — at Aaron's discretion (links ready in memory/order-links.md)
