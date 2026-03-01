@@ -1,0 +1,49 @@
+name: Check for private files
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-private-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for private file patterns
+        run: |
+          BLOCKED=0
+          block() { echo "❌ BLOCKED: $1 — $2"; BLOCKED=1; }
+
+          # Get all files in the commit
+          FILES=$(git diff --name-only ${{ github.event.before || 'HEAD~1' }} HEAD 2>/dev/null || git ls-files)
+
+          for file in $FILES; do
+            [ -f "$file" ] || continue
+            base=$(basename "$file")
+
+            # Private filenames
+            for name in MEMORY.md SECURITY.md THREAT-MODEL.md trust.json trusted-senders.json SOUL.md USER.md CURRENT.md PROCESS.md; do
+              [ "$base" = "$name" ] && block "$file" "Private file: $name"
+            done
+
+            # Private directories
+            for dir in incidents/ memory/ secrets/ .openclaw/ workspace/; do
+              case "$file" in ${dir}*) block "$file" "Private directory: $dir";; esac
+            done
+
+            # .env files
+            case "$file" in *.env|.env*) block "$file" "Environment file";; esac
+
+            # Credentials/secrets in path
+            echo "$file" | grep -qiE '(credentials|secrets)' && block "$file" "Path contains credentials/secrets"
+
+            # Content checks
+            if grep -qE '(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36,}|dop_v1_[a-f0-9]{64}|AKIA[0-9A-Z]{16})' "$file" 2>/dev/null; then
+              block "$file" "Contains API key pattern"
+            fi
+          done
+
+          exit $BLOCKED

@@ -1,0 +1,16 @@
+# Files explicitly approved for public commit
+# Add filenames or patterns here to bypass the pre-commit hook
+#
+# Directory patterns end with /
+# Exact filenames match basename
+docs/
+reference-implementations/
+examples/
+ratchet/docs/
+.github/
+index.html
+capabilities.json
+README.md
+LICENSE
+NORTH-STAR.md
+.ratchet-public
