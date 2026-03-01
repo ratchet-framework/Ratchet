@@ -1,5 +1,25 @@
 # CURRENT.md — What Pawl Is Building Right Now
 
+## Session: 2026-03-01
+**Status:** Epic 3 (Behavioral Consistency) shipped. Guardrails active.
+
+## Epic 3: Behavioral Consistency — SHIPPED ✅
+
+### What was built (sub-agent: epic-3-guardrails)
+- [x] **`guardrails.json`** — 9 guardrails derived from INC-001 through INC-009 (4 hard, 5 soft)
+- [x] **`bin/preflight-check`** — keyword matching against guardrails, JSON output, exit code by severity
+- [x] **`bin/pause-and-ask`** — queues actions to pending-actions.json, sends Telegram to Aaron with approve/cancel framing
+- [x] **`bin/comms-review`** — approve/deny pending actions, timeout handling, audit log
+- [x] **`bin/session-start`** — now injects compact guardrails summary (up to 5 lines) at session start
+
+### How it works
+- Before any high-risk action: `python3 bin/preflight-check "action description"` → JSON with matched rules
+- To pause for approval: `python3 bin/pause-and-ask --action "..." --trigger "GR-003" --context "..." --severity destructive`
+- Aaron approves/denies via: `python3 bin/comms-review <id> approve`
+- All sessions now surface active guardrails automatically at startup
+
+---
+
 ## Session: 2026-02-28 (Complete)
 **Status:** All major work shipped. System stable. Ready for Aaron's return.
 
