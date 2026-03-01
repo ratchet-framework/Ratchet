@@ -1,7 +1,25 @@
 # CURRENT.md — What Pawl Is Building Right Now
 
 ## Session: 2026-03-01
-**Status:** Epic 3 (Behavioral Consistency) shipped. Guardrails active.
+**Status:** Epic 2 (Comms Queue + Trust Enforcement) shipped. Epic 3 (Behavioral Consistency) shipped. Guardrails active.
+
+## Epic 2: Comms Queue + Trust Tier Enforcement — SHIPPED ✅
+
+### What was built (sub-agent: epic-2-comms-queue)
+- [x] **`bin/classify-audience`** — audience classifier. 11/11 smoke tests passing. Defaults to `external-unknown` (fail-safe). Public repos always external-unknown.
+- [x] **`workspace/comms/`** — directory structure (`queue/`, `sent/`, `rejected/`). Draft JSON format documented in `comms/README.md`.
+- [x] **`bin/comms-send`** — execute approved comms from queue. Gates: commsQueueEnabled check, approved status check, audience classification. Logs to `comms/audit.jsonl`.
+- [x] **`bin/trust-check`** — evaluates all regression triggers from trust.json regressionRules. Reads incident files, counts P1/P2 by class and recency. JSON output + `--summary` mode.
+- [x] **`bin/metrics-collect` updated** — added `weeks_since_last_incident`, `incident_severity_distribution` (trailing 4 weeks), `trust_tier_readiness` (boolean).
+- [x] **`trust.json` updated** — added `regressionRules` block (5 triggers), `commsQueueEnabled: false`, `t3Phase: 1`.
+- [x] **`capabilities.json` updated** — split `github` → `github-own-repos` (T2) + `github-external` (T3). Added `comms-queue` and `audience-classification` capabilities.
+
+### Notable finding from trust-check run
+- `p2Any3in4weeks` trigger is **LIVE** — 3 P2 incidents in last 4 weeks. Would trigger tier drop if `--apply` is run.
+- `patternSystemic` also triggered. These are real signals from INC-005, INC-007, INC-009.
+- Aaron should review before running `trust-check --apply`.
+
+
 
 ## Epic 3: Behavioral Consistency — SHIPPED ✅
 

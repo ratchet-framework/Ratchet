@@ -134,6 +134,22 @@
           "description": "Evidence-based autonomy expansion. T1-T5 tiers unlock as competence is demonstrated. Metrics drive advancement. P1 incidents trigger regression. Aaron confirms each step.",
           "status": "unlocked",
           "unlockedAt": "2026-02-28"
+        },
+        {
+          "id": "comms-queue",
+          "label": "Comms queue",
+          "description": "External communications queued for Aaron review before sending. Draft \u2192 classify \u2192 queue \u2192 approve \u2192 send. Graduated autonomy across T3 phases.",
+          "status": "locked",
+          "unlockedAt": null,
+          "tier": "T3"
+        },
+        {
+          "id": "audience-classification",
+          "label": "Audience classification",
+          "description": "Every outbound action classified: internal | external-known | external-unknown. Defaults to external-unknown (fail-safe). Must be unlocked and validated before T3 advancement.",
+          "status": "locked",
+          "unlockedAt": null,
+          "tier": "T3-prerequisite"
         }
       ]
     },
@@ -149,11 +165,20 @@
           "unlockedAt": "2026-02-27"
         },
         {
-          "id": "github",
-          "label": "GitHub (full access)",
-          "description": "SSH push access + API management as Pawl (pawlratchet). Commits, issues, repo settings \u2014 all autonomous.",
+          "id": "github-own-repos",
+          "label": "GitHub (own repos)",
+          "description": "SSH push access + API management as Pawl (pawlratchet) on repos Pawl owns. Commits, issues, repo settings \u2014 autonomous at T2.",
           "status": "unlocked",
-          "unlockedAt": "2026-02-27"
+          "unlockedAt": "2026-02-27",
+          "tier": "T2"
+        },
+        {
+          "id": "github-external",
+          "label": "GitHub (external repos)",
+          "description": "Post comments, PRs, and discussions on repos Pawl does not own. Public forum audience. Requires T3 + comms queue.",
+          "status": "locked",
+          "unlockedAt": null,
+          "tier": "T3"
         },
         {
           "id": "email-read",
