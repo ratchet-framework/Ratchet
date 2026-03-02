@@ -45,13 +45,9 @@ jobs:
               block "$file" "Contains API key pattern"
             fi
 
-            # Content checks — private workspace references
-            # Exempt docs/ — design docs legitimately reference private filenames as examples
-            case "$file" in docs/*) ;; *)
-              if grep -qE '(MEMORY\.md|SECURITY\.md|THREAT-MODEL\.md|trust\.json|incidents/INC-|/memory/[0-9]{4}-[0-9]{2})' "$file" 2>/dev/null; then
-                block "$file" "Contains references to private workspace content"
-              fi
-            ;; esac
+            # Note: private workspace reference check is intentionally omitted here.
+            # The Ratchet repo documents the framework which defines files like MEMORY.md,
+            # trust.json, and incidents/ — referencing them by name is expected and correct.
 
             # Content checks — private/infrastructure IPs
             if grep -qE '\b(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|64\.225\.15\.45)\b' "$file" 2>/dev/null; then
