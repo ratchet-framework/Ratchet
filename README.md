@@ -1,10 +1,15 @@
 # Ratchet
 
-**[getratchet.dev](https://getratchet.dev) · AI agents that only get better.**
+**[getratchet.dev](https://getratchet.dev) · The accountability layer for AI agents.**
 
-Ratchet is an engineering framework for building AI agents that continuously improve themselves — autonomously, over time, with minimal human involvement.
+Most AI frameworks ask: *can the agent do the task?*  
+Ratchet asks: *will it still work on Tuesday?*
 
-Most agent frameworks focus on what an agent *can do*. Ratchet focuses on how an agent *gets better*.
+Ratchet gives your agent structured memory, an incident loop, and evidence-based trust tiers — so mistakes get caught, fixes stick, and autonomy is earned, not assumed.
+
+It doesn't compete with your task-performance stack. It's the layer that makes your stack dependable.
+
+You bring the agent. Ratchet makes sure it never gets worse.
 
 ---
 
