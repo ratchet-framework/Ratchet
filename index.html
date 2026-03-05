@@ -190,6 +190,18 @@
     .btn-secondary:hover { border-color: var(--muted2); background: var(--surface2); }
 
     /* ── Live Stats ── */
+    .stat-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      border-radius: 8px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .stat-link:hover {
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-2px);
+      cursor: pointer;
+    }
     .stats-bar {
       max-width: 760px;
       margin: 0 auto 5rem;
@@ -718,26 +730,26 @@
   <!-- Live Stats -->
   <div class="stats-bar">
     <div class="stats-grid">
-      <div class="stat">
+      <a class="stat stat-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md" target="_blank" rel="noopener">
         <div class="stat-value green">51</div>
         <div class="stat-label">Memory facts extracted</div>
-      </div>
-      <div class="stat">
+      </a>
+      <a class="stat stat-link" href="dashboard.html" target="_blank" rel="noopener">
         <div class="stat-value blue">21</div>
         <div class="stat-label">Capabilities unlocked</div>
-      </div>
-      <div class="stat">
+      </a>
+      <a class="stat stat-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/incident-loop.md" target="_blank" rel="noopener">
         <div class="stat-value orange">7→7</div>
         <div class="stat-label">Incidents → prevention tasks</div>
-      </div>
-      <div class="stat">
+      </a>
+      <a class="stat stat-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/epic-trust-enforcement.md" target="_blank" rel="noopener">
         <div class="stat-value purple">T2</div>
         <div class="stat-label">Trust tier reached</div>
-      </div>
-      <div class="stat">
+      </a>
+      <a class="stat stat-link" href="https://github.com/ratchet-framework/Ratchet/commits/main/" target="_blank" rel="noopener">
         <div class="stat-value green">10+</div>
         <div class="stat-label">Commits shipped</div>
-      </div>
+      </a>
     </div>
   </div>
 
