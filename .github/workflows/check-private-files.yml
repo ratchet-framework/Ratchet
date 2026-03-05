@@ -17,15 +17,8 @@ jobs:
           BLOCKED=0
           block() { echo "❌ BLOCKED: $1 — $2"; BLOCKED=1; }
 
-          # Get all files in the commit
-          BEFORE="${{ github.event.before }}"
-          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE" 2>/dev/null; then
-            FILES=$(git diff --name-only "$BEFORE" HEAD 2>/dev/null || git ls-files)
-          else
-            FILES=$(git ls-files)
-          fi
-
-          for file in $FILES; do
+          # Scan all tracked files — simple, predictable, no git history gymnastics
+          while IFS= read -r file; do
             [ -f "$file" ] || continue
             base=$(basename "$file")
 
@@ -63,6 +56,7 @@ jobs:
             if grep -oE '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' "$file" 2>/dev/null | grep -qvE '(pawl\.ratchetai@gmail\.com|example\.com|users\.noreply\.github\.com)'; then
               block "$file" "Contains email address(es)"
             fi
-          done
+
+          done < <(git ls-files)
 
           exit $BLOCKED
