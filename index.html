@@ -411,6 +411,17 @@
       line-height: 1.6;
     }
 
+    .cap-card-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .cap-card-link:hover .cap-card {
+      border-color: var(--border-subtle);
+      transform: translateY(-2px);
+    }
+
     .cap-card .cap-link {
       display: inline-flex;
       align-items: center;
@@ -832,79 +843,93 @@
 
     <div class="cap-grid">
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">🧠</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="memory.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">🧠</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Ratchet Memory</h3>
+          <p>Adaptive memory that survives session boundaries. Facts extracted automatically from transcripts, scored by importance and decay, retrieved by semantic similarity. Three phases: extraction → lifecycle scoring → embedding-based retrieval.</p>
         </div>
-        <h3>Ratchet Memory</h3>
-        <p>Adaptive memory that survives session boundaries. Facts extracted automatically from transcripts, scored by importance and decay, retrieved by semantic similarity. Three phases: extraction → lifecycle scoring → embedding-based retrieval.</p>
-        <a class="cap-link" href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md">Architecture docs →</a>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">🔁</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="incident-loop.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">🔁</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Incident loop</h3>
+          <p>Every failure gets a postmortem. Root cause, blast radius, prevention tasks — all documented before a fix ships. "Done" means the class of problem is addressed, not just the instance.</p>
         </div>
-        <h3>Incident loop</h3>
-        <p>Every failure gets a postmortem. Root cause, blast radius, prevention tasks — all documented before a fix ships. "Done" means the class of problem is addressed, not just the instance.</p>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">📋</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="backlog.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">📋</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Autonomous backlog</h3>
+          <p>Self-identified tasks execute during heartbeats. P1s run immediately. P2/P3 work through the backlog without prompting. The agent surfaces its own work.</p>
         </div>
-        <h3>Autonomous backlog</h3>
-        <p>Self-identified tasks execute during heartbeats. P1s run immediately. P2/P3 work through the backlog without prompting. The agent surfaces its own work.</p>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">📈</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="trust-tiers.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">📈</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Autonomy tiers</h3>
+          <p>Trust expands over time as it's earned. T1 → T2 → T3. Each tier unlocks additional autonomous action. The framework is explicit about what the agent decides alone vs. escalates.</p>
         </div>
-        <h3>Autonomy tiers</h3>
-        <p>Trust expands over time as it's earned. T1 → T2 → T3. Each tier unlocks additional autonomous action. The framework is explicit about what the agent decides alone vs. escalates.</p>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">⏱️</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="cadence.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">⏱️</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Cadence tracking</h3>
+          <p>Track anything with a maintenance interval — by time, usage, or both. Pre-service checklists in every alert. Log a completed service in one message. Works for vehicles, infrastructure, habits.</p>
         </div>
-        <h3>Cadence tracking</h3>
-        <p>Track anything with a maintenance interval — by time, usage, or both. Pre-service checklists in every alert. Log a completed service in one message. Works for vehicles, infrastructure, habits.</p>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">📍</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="context.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">📍</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Context system</h3>
+          <p>Authoritative state for location, timezone, and preferences stored in <code style="font-family:var(--mono);font-size:0.8em;color:var(--accent2)">context.json</code>. Never assumed — always checked before creating anything time or location-sensitive.</p>
         </div>
-        <h3>Context system</h3>
-        <p>Authoritative state for location, timezone, and preferences stored in <code style="font-family:var(--mono);font-size:0.8em;color:var(--accent2)">context.json</code>. Never assumed — always checked before creating anything time or location-sensitive.</p>
-      </div>
+      </a>
 
-      <div class="cap-card unlocked">
-        <div class="cap-header">
-          <span class="cap-icon">💓</span>
-          <span class="cap-badge badge-unlocked">Unlocked</span>
+      <a href="heartbeat.html" class="cap-card-link">
+        <div class="cap-card unlocked">
+          <div class="cap-header">
+            <span class="cap-icon">💓</span>
+            <span class="cap-badge badge-unlocked">Unlocked</span>
+          </div>
+          <h3>Heartbeat system</h3>
+          <p>Periodic polling triggers batched background work — email triage, calendar checks, backlog progress. Configurable via HEARTBEAT.md. Keeps the agent active without constant prompting.</p>
         </div>
-        <h3>Heartbeat system</h3>
-        <p>Periodic polling triggers batched background work — email triage, calendar checks, backlog progress. Configurable via HEARTBEAT.md. Keeps the agent active without constant prompting.</p>
-      </div>
+      </a>
 
-      <div class="cap-card">
-        <div class="cap-header">
-          <span class="cap-icon">🔌</span>
-          <span class="cap-badge badge-locked">Spec</span>
+      <a href="adapters.html" class="cap-card-link">
+        <div class="cap-card">
+          <div class="cap-header">
+            <span class="cap-icon">🔌</span>
+            <span class="cap-badge badge-locked">Spec</span>
+          </div>
+          <h3>Platform adapters</h3>
+          <p>Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back. Reference implementation ships with OpenClaw.</p>
         </div>
-        <h3>Platform adapters</h3>
-        <p>Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back. Reference implementation ships with OpenClaw.</p>
-        <a class="cap-link" href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations" style="color:var(--accent2);">Reference implementations →</a>
-      </div>
+      </a>
 
     </div>
   </section>

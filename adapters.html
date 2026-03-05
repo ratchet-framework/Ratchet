@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Adapters — Ratchet Framework</title>
+  <meta name="description" content="Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Reference implementation ships with OpenClaw.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface2: #1c2128;
+      --border: #30363d; --border-subtle: #21262d;
+      --text: #e6edf3; --muted: #8b949e; --muted2: #6e7681;
+      --accent: #f78166; --accent2: #79c0ff;
+      --green: #3fb950; --yellow: #e3b341; --purple: #d2a8ff;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.6; min-height: 100vh; }
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 760px; margin: 0 auto; padding: 0 2rem; }
+    .nav-wrap { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(13,17,23,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    nav { max-width: 960px; margin: 0 auto; padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: var(--mono); font-size: 1.05rem; color: var(--text); font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 0.4rem; }
+    .logo span { color: var(--accent); }
+    .logo-sub { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-left: 0.25rem; }
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a { color: var(--muted); font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+    .nav-links a:hover { color: var(--text); background: var(--surface); text-decoration: none; }
+    .nav-links .btn-nav { background: var(--accent); color: #0d1117; font-weight: 600; margin-left: 0.5rem; }
+    .nav-links .btn-nav:hover { background: #ff9b85; color: #0d1117; }
+    .back-wrap { padding: 1.5rem 2rem 0; max-width: 760px; margin: 0 auto; }
+    .back-link { font-size: 0.875rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.35rem; }
+    .back-link:hover { color: var(--text); text-decoration: none; }
+    .hero { padding: 3rem 2rem 3.5rem; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(139,148,158,0.08) 0%, transparent 70%); pointer-events: none; }
+    .hero-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(139,148,158,0.1); border: 1px solid var(--border-subtle); color: var(--muted2); font-family: var(--mono); font-size: 0.72rem; padding: 0.3rem 0.85rem; border-radius: 2rem; margin-bottom: 1.5rem; letter-spacing: 0.5px; text-transform: uppercase; }
+    .hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 1rem; }
+    .hero-sub { font-size: 1.1rem; color: var(--muted); max-width: 560px; margin: 0 auto; line-height: 1.7; }
+    .section { padding: 3rem 2rem; border-top: 1px solid var(--border-subtle); }
+    .section-label { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; }
+    .section h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 1.5rem; }
+    .how-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .how-list li { display: flex; gap: 1rem; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; }
+    .how-list li .bullet { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.05rem; }
+    .how-list li .text strong { display: block; font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; }
+    .how-list li .text p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .callout p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+    .callout strong { color: var(--text); }
+    .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .platform-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+    .platform-card.reference { border-color: rgba(63,185,80,0.3); }
+    .platform-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+    .platform-card .ref-badge { font-size: 0.65rem; background: rgba(63,185,80,0.15); border: 1px solid rgba(63,185,80,0.3); color: var(--green); padding: 0.15rem 0.4rem; border-radius: 3px; font-family: var(--mono); font-weight: 700; }
+    .platform-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+    pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem; line-height: 1.75; color: var(--muted); margin-top: 1rem; }
+    .c-dim { color: #484f58; } .c-accent { color: var(--accent); } .c-blue { color: var(--accent2); }
+    footer { border-top: 1px solid var(--border); padding: 2.5rem 2rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+    .footer-links { margin-bottom: 0.75rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+    @media (max-width: 640px) { nav { flex-direction: column; gap: 0.75rem; } .nav-links { flex-wrap: wrap; justify-content: center; } }
+  </style>
+</head>
+<body>
+
+  <div class="nav-wrap">
+    <nav>
+      <a href="index.html" class="logo" style="text-decoration:none;">🔩 <span>ratchet</span><span class="logo-sub">framework</span></a>
+      <div class="nav-links">
+        <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+        <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
+        <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a class="btn-nav" href="https://github.com/ratchet-framework/Ratchet">GitHub →</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="back-wrap">
+    <a href="index.html" class="back-link">← Back to Ratchet</a>
+  </div>
+
+  <section class="hero container">
+    <span class="hero-icon">🔌</span>
+    <div class="hero-badge">Spec</div>
+    <h1>Platform Adapters</h1>
+    <p class="hero-sub">Ratchet is conventions, not code. Wire it to OpenClaw, Claude Code, Cursor, or any agent platform. Write an adapter, contribute it back. Reference implementation ships with OpenClaw.</p>
+  </section>
+
+  <div class="container">
+    <section class="section">
+      <div class="section-label">How it works</div>
+      <h2>The Ratchet stack is platform-agnostic</h2>
+      <ul class="how-list">
+        <li>
+          <span class="bullet">📁</span>
+          <div class="text">
+            <strong>Portable by design</strong>
+            <p>Ratchet is a collection of files and conventions — MEMORY.md, BACKLOG.md, incidents/, memory/, context.json. No database, no API, no proprietary platform. Copy the files to your workspace, wire the hooks, you're done.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🪝</span>
+          <div class="text">
+            <strong>Three platform hooks</strong>
+            <p><code style="font-family:var(--mono);color:#79c0ff;font-size:0.9em">on_session_end</code> → run memory extraction. <code style="font-family:var(--mono);color:#79c0ff;font-size:0.9em">on_session_start</code> → inject relevant facts. <code style="font-family:var(--mono);color:#79c0ff;font-size:0.9em">on_weekly_review</code> → run memory management. Any platform that supports these hooks can use Ratchet.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🔧</span>
+          <div class="text">
+            <strong>Reference implementation: OpenClaw</strong>
+            <p>OpenClaw is the proven platform for Ratchet. Full integration with heartbeat, cron jobs, context loading, and Telegram delivery. If you want to run Ratchet today, OpenClaw is the fastest path.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🤝</span>
+          <div class="text">
+            <strong>Contribute your adapter</strong>
+            <p>Built Ratchet on Claude Code? Cursor? LLaMA? Write an adapter, document how to wire it up, and submit a PR. The framework is only as useful as the platforms it runs on.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <div class="section-label">Reference implementations</div>
+      <h2>Adapters available today</h2>
+      <div class="platform-grid">
+        <div class="platform-card reference">
+          <h3>
+            OpenClaw
+            <span class="ref-badge">Reference</span>
+          </h3>
+          <p>Full Ratchet integration including heartbeat, cron scheduling, context loading, and Telegram delivery. The recommended starting point.</p>
+        </div>
+        <div class="platform-card">
+          <h3>Claude Code</h3>
+          <p>Ratchet hooks via Claude Code environment. Proof of concept for LLM-native implementation.</p>
+        </div>
+        <div class="platform-card">
+          <h3>Cursor</h3>
+          <p>Integration pattern for IDE-embedded agents. Handles file-based context loading and command execution.</p>
+        </div>
+        <div class="platform-card">
+          <h3>Your platform?</h3>
+          <p>Ratchet is designed to be portable. If your agent platform has file I/O and can execute scripts, Ratchet works.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>The key insight:</strong> Ratchet doesn't depend on any specific platform. By using flat files, it stays portable across Claude Code, Cursor, raw LLMs, and custom agent frameworks. Your agent data isn't locked into a proprietary system.</p>
+      </div>
+
+      <h3 style="font-size:1.05rem;font-weight:700;margin:1.75rem 0 1rem;color:var(--text);">Building an adapter</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:0.75rem;">Three required hooks:</p>
+      <pre>| Hook | Trigger | Action |
+|------|---------|--------|
+| <span class="c-accent">on_session_end</span> | Before context compaction | Run <span class="c-blue">bin/memory-extract</span> |
+| <span class="c-accent">on_session_start</span> | After context loads | Run <span class="c-blue">bin/memory-retrieve</span>, inject facts |
+| <span class="c-accent">on_weekly_review</span> | Friday review cron | Run <span class="c-blue">bin/memory-manage</span> |</pre>
+
+      <p style="margin-top:1.5rem;font-size:0.875rem;color:var(--muted);">
+        Full OpenClaw adapter: <a href="https://github.com/ratchet-framework/Ratchet/blob/main/reference-implementations/openclaw.md">reference-implementations/openclaw.md →</a>
+      </p>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+    <p>Built by <a href="https://github.com/ratchet-framework">ratchet-framework</a> · MIT License · The ratchet only clicks forward.</p>
+  </footer>
+
+</body>
+</html>

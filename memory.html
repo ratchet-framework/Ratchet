@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ratchet Memory — Adaptive Memory for AI Agents</title>
+  <meta name="description" content="Adaptive memory that survives session boundaries. Facts extracted automatically, scored by importance, retrieved by semantic similarity.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface2: #1c2128;
+      --border: #30363d; --border-subtle: #21262d;
+      --text: #e6edf3; --muted: #8b949e; --muted2: #6e7681;
+      --accent: #f78166; --accent2: #79c0ff;
+      --green: #3fb950; --yellow: #e3b341; --purple: #d2a8ff;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.6; min-height: 100vh; }
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 760px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Nav */
+    .nav-wrap { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(13,17,23,0.92); backdrop-filter: blur(12px); z-index: 100; }
+    nav { max-width: 960px; margin: 0 auto; padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: var(--mono); font-size: 1.05rem; color: var(--text); font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 0.4rem; }
+    .logo span { color: var(--accent); }
+    .logo-sub { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-left: 0.25rem; }
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a { color: var(--muted); font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+    .nav-links a:hover { color: var(--text); background: var(--surface); text-decoration: none; }
+    .nav-links .btn-nav { background: var(--accent); color: #0d1117; font-weight: 600; margin-left: 0.5rem; }
+    .nav-links .btn-nav:hover { background: #ff9b85; color: #0d1117; }
+
+    /* Back link */
+    .back-wrap { padding: 1.5rem 2rem 0; max-width: 760px; margin: 0 auto; }
+    .back-link { font-size: 0.875rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.35rem; }
+    .back-link:hover { color: var(--text); text-decoration: none; }
+
+    /* Hero */
+    .hero { padding: 3rem 2rem 3.5rem; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(63,185,80,0.08) 0%, transparent 70%); pointer-events: none; }
+    .hero-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.25); color: var(--green); font-family: var(--mono); font-size: 0.72rem; padding: 0.3rem 0.85rem; border-radius: 2rem; margin-bottom: 1.5rem; letter-spacing: 0.5px; text-transform: uppercase; }
+    .hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 1rem; }
+    .hero-sub { font-size: 1.1rem; color: var(--muted); max-width: 560px; margin: 0 auto; line-height: 1.7; }
+
+    /* Sections */
+    .section { padding: 3rem 2rem; border-top: 1px solid var(--border-subtle); }
+    .section-label { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; }
+    .section h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 1.5rem; }
+
+    /* How it works list */
+    .how-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .how-list li { display: flex; gap: 1rem; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; }
+    .how-list li .bullet { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.05rem; }
+    .how-list li .text strong { display: block; font-size: 0.95rem; color: var(--text); margin-bottom: 0.25rem; }
+    .how-list li .text p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* Callout */
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .callout p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+    .callout p + p { margin-top: 0.75rem; }
+    .callout strong { color: var(--text); }
+
+    /* Code */
+    pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem; line-height: 1.75; color: var(--muted); margin-top: 1rem; }
+    .c-green { color: var(--green); } .c-blue { color: var(--accent2); } .c-accent { color: var(--accent); } .c-dim { color: #484f58; } .c-purple { color: var(--purple); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 2.5rem 2rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+    .footer-links { margin-bottom: 0.75rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+
+    @media (max-width: 640px) { nav { flex-direction: column; gap: 0.75rem; } .nav-links { flex-wrap: wrap; justify-content: center; } }
+  </style>
+</head>
+<body>
+
+  <div class="nav-wrap">
+    <nav>
+      <a href="index.html" class="logo" style="text-decoration:none;">🔩 <span>ratchet</span><span class="logo-sub">framework</span></a>
+      <div class="nav-links">
+        <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+        <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
+        <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a class="btn-nav" href="https://github.com/ratchet-framework/Ratchet">GitHub →</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="back-wrap">
+    <a href="index.html" class="back-link">← Back to Ratchet</a>
+  </div>
+
+  <section class="hero container">
+    <span class="hero-icon">🧠</span>
+    <div class="hero-badge">Unlocked</div>
+    <h1>Ratchet Memory</h1>
+    <p class="hero-sub">Adaptive memory that survives session boundaries — facts extracted automatically from transcripts, scored by importance and decay, retrieved by semantic similarity.</p>
+  </section>
+
+  <div class="container">
+    <section class="section">
+      <div class="section-label">How it works</div>
+      <h2>Three primitives, four lifecycle stages</h2>
+      <ul class="how-list">
+        <li>
+          <span class="bullet">⚗️</span>
+          <div class="text">
+            <strong>Extract</strong>
+            <p>At session end, an isolated LLM agent reads the transcript and pulls discrete, atomic facts — never inferences. "Aaron's WRX oil change is due at 11,799 miles" is a fact. "Aaron seems to care about his car" is not.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">📦</span>
+          <div class="text">
+            <strong>Store</strong>
+            <p>Facts land in flat <code style="font-family:var(--mono);color:var(--accent2);font-size:0.9em">facts-YYYY-Q#.jsonl</code> files — append-only, portable, no database required. Each fact carries an importance score, tags, category, and a <code style="font-family:var(--mono);color:var(--accent2);font-size:0.9em">supersedes</code> field to prevent contradictions from accumulating.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🔍</span>
+          <div class="text">
+            <strong>Retrieve</strong>
+            <p>On session start, the top 10–15 relevant facts are injected as "Known context from previous sessions." Phase 1 uses LLM-based selection; Phase 3 switches to cosine similarity embeddings once the fact store exceeds 50 entries.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🔄</span>
+          <div class="text">
+            <strong>Manage</strong>
+            <p>Weekly: facts decay at 0.95×/week unreferenced, reinforce when the user confirms them (injection doesn't count — prevents runaway loops), promote to <code style="font-family:var(--mono);color:var(--accent2);font-size:0.9em">MEMORY.md</code> when importance &gt; 0.8 and reference count ≥ 3, and purge when effective score drops below 0.1.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bullet">🛡️</span>
+          <div class="text">
+            <strong>Prompt injection defense</strong>
+            <p>The extraction agent has no tool access. Content from untrusted sources (email body, web pages) is wrapped in <code style="font-family:var(--mono);color:var(--accent2);font-size:0.9em">[UNTRUSTED DATA]</code> delimiters. Facts from untrusted sources get a 0.5× importance penalty and require a higher threshold for promotion.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <div class="section-label">See it in action</div>
+      <h2>Scoring and lifecycle</h2>
+      <div class="callout">
+        <p><strong>Score = base_importance × recency_boost × relevance_to_context</strong></p>
+        <p>Three separate axes — not collapsed into one number until retrieval time. This means a highly important but stale fact can still be surfaced when relevant, and a recent but trivial fact doesn't crowd out critical context.</p>
+      </div>
+      <div class="callout">
+        <p><strong>The Opus critique that shaped this design:</strong> "The core tension: you want the extractor to be creative enough to identify implicit facts but constrained enough to never hallucinate. Err hard toward literal extraction. A missed fact is recoverable — it'll surface again. A hallucinated fact poisons the memory store and compounds over time."</p>
+      </div>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:0.75rem;">Fact structure on disk:</p>
+      <pre>{
+  "id": "uuid",
+  "content": "WRX oil change due at 11,799 miles",
+  "category": "vehicle",
+  "importance": 0.85,
+  "tier": "standard",       <span class="c-dim">// permanent | standard | transient</span>
+  "created": "2026-02-28",
+  "last_referenced": "2026-03-01",
+  "reference_count": 2,
+  "supersedes": null,
+  "source_trust": "trusted"
+}</pre>
+      <p style="margin-top:1.5rem;font-size:0.875rem;color:var(--muted);">
+        Full architecture doc: <a href="https://github.com/ratchet-framework/Ratchet/blob/main/docs/adaptive-memory.md">adaptive-memory.md →</a>
+      </p>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://github.com/ratchet-framework/Ratchet">GitHub</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/docs">Docs</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/tree/main/reference-implementations">Examples</a>
+      <a href="https://github.com/ratchet-framework/Ratchet/issues">Issues</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+    <p>Built by <a href="https://github.com/ratchet-framework">ratchet-framework</a> · MIT License · The ratchet only clicks forward.</p>
+  </footer>
+
+</body>
+</html>

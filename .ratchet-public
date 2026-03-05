@@ -9,6 +9,15 @@ examples/
 ratchet/docs/
 .github/
 index.html
+dashboard.html
+memory.html
+incident-loop.html
+backlog.html
+trust-tiers.html
+cadence.html
+context.html
+heartbeat.html
+adapters.html
 capabilities.json
 README.md
 LICENSE
