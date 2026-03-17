@@ -1,3 +1,51 @@
+#!/bin/bash
+# Run from C:/Projects/Ratchet on the modularize branch
+# Quick cleanup: .gitignore, README, remove stale scripts
+set -e
+
+echo "🧹 Cleaning up repo..."
+
+# --- .gitignore ---
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ratchet workspace (private agent state)
+agents/*/memory/
+agents/*/incidents/*.md
+!agents/*/incidents/README.md
+
+# Scaffold scripts (one-time use)
+scaffold.sh
+add-memory-extract.sh
+add-memory-retrieve.sh
+add-memory-manage-embed.sh
+EOF
+
+# --- Root README ---
+cat > README.md << 'MDEOF'
 # Ratchet
 
 **[getratchet.dev](https://getratchet.dev) · The accountability layer for AI agents.**
@@ -101,3 +149,16 @@ Ratchet is early. Contributions welcome:
 ## License
 
 MIT
+MDEOF
+
+echo ""
+echo "✅ Repo cleaned up!"
+echo ""
+echo "Updated:"
+echo "  .gitignore  — Python, IDE, OS, workspace, scaffold scripts"
+echo "  README.md   — reflects modular architecture"
+echo ""
+echo "Run:"
+echo "  git add -A"
+echo "  git status"
+echo "  # Then commit and push"

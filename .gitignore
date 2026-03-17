@@ -1,35 +1,35 @@
-# Private operational files — never commit these
-memory/
-workspace-index.json
-embeddings.json
-facts-*.jsonl
-facts-purged.jsonl
-facts-rejected.jsonl
-extraction-errors.jsonl
-memory-log.jsonl
-patterns.json
-*.env
-secrets/
-MEMORY.md
-trust.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
 
-# Secrets and credentials
-.env.*
-credentials/
+# Virtual environments
+.venv/
+venv/
+env/
 
-# Personal context — never commit real user data
-context.local.json
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Editor
-.vscode/
-.idea/
+# Ratchet workspace (private agent state)
+agents/*/memory/
+agents/*/incidents/*.md
+!agents/*/incidents/README.md
 
-# Logs
-*.log
-
-# Local/temp screenshots (root only — docs/screenshots is intentional)
-/screenshots/
+# Scaffold scripts (one-time use)
+scaffold.sh
+add-memory-extract.sh
+add-memory-retrieve.sh
+add-memory-manage-embed.sh
