@@ -1,0 +1,22 @@
+{
+  "name": "Pawl",
+  "timezone": "America/New_York",
+  "units": "imperial",
+  "locale": "en-US",
+  "location": {
+    "city": "Raleigh",
+    "state": "NC",
+    "country": "US"
+  },
+  "heartbeat_interval_minutes": 30,
+  "quiet_hours": {
+    "start": "23:00",
+    "end": "07:00"
+  },
+  "memory": {
+    "facts_dir": "memory/facts",
+    "provider": "anthropic",
+    "embedding_provider": "tfidf",
+    "max_retrieval": 15
+  }
+}
