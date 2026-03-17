@@ -4,6 +4,7 @@ import asyncio
 import logging
 from ratchet.core import Agent
 from ratchet.memory import MemoryModule
+from ratchet.pilot import PilotModule
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,6 +16,7 @@ logging.basicConfig(
 async def main():
     agent = Agent(name="Pawl", config_path="agents/pawl/config/context.json")
     agent.register(MemoryModule())
+    agent.register(PilotModule())
 
     await agent.start()
     print(f"\n✅ Agent '{agent.name}' started with {len(agent.modules)} module(s):")

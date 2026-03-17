@@ -18,5 +18,13 @@
     "provider": "anthropic",
     "embedding_provider": "tfidf",
     "max_retrieval": 15
+  },
+  "pilot": {
+    "incidents_dir": "incidents",
+    "trust_path": "config/trust.json",
+    "guardrails_path": "config/guardrails.json",
+    "backlog_path": "BACKLOG.md",
+    "metrics_path": "metrics.json",
+    "github_repo": "ratchet-framework/Ratchet"
   }
 }
