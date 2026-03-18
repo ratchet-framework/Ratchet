@@ -17,7 +17,7 @@ Ratchet is a modular framework. Install what you need:
 |---------|-------------|--------|
 | **[ratchet-core](packages/ratchet-core/)** | Agent lifecycle, module system, event bus, config | ✅ Ready |
 | **[ratchet-memory](packages/ratchet-memory/)** | Fact extraction, retrieval, lifecycle, embeddings | ✅ Ready |
-| **ratchet-pilot** | Self-improvement engine: backlog, incidents, trust tiers | 🔜 Next |
+| **ratchet-pilot** | Self-improvement engine: backlog, incidents, trust tiers | ✅ Ready |
 | **ratchet-factory** | Code generation, testing, deployment | 🔜 Planned |
 | **ratchet-research** | Deep research with vector DB storage | 🔜 Planned |
 | **ratchet-ops** | Business process automation | 🔜 Planned |
