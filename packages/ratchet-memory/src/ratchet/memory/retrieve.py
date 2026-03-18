@@ -99,6 +99,8 @@ def _select_by_llm(scored_facts, context, top_n, provider):
     candidates = scored_facts[:150]
     facts_text = []
     for fact in candidates:
+        if not fact.get("id") or not fact.get("content"):
+            continue
         facts_text.append(json.dumps({
             "id": fact["id"], "content": fact["content"],
             "category": fact.get("category", "?"),
