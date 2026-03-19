@@ -403,13 +403,17 @@
         <div class="terminal-dot g"></div>
         <span class="terminal-title">terminal</span>
       </div>
-      <div class="terminal-body">
-        <span class="prompt">$</span> <span class="cmd">pip install ratchet-factory</span><br>
+<div class="terminal-body">
+        <span class="comment"># Install Ratchet</span><br>
+        <span class="prompt">$</span> <span class="cmd">pip install ratchet-factory ratchet-memory ratchet-pilot ratchet-research ratchet-ops</span><br>
+        <br>
+        <span class="comment"># Wire into your agent</span><br>
+        <span class="prompt">$</span> <span class="cmd">ratchet setup openclaw</span><br>
+        <span class="output">✅ Ratchet is wired into OpenClaw. 8 commands installed.</span><br>
+        <br>
+        <span class="comment"># Or start fresh</span><br>
         <span class="prompt">$</span> <span class="cmd">ratchet init my-agent</span><br>
-        <span class="output">🔩 Agent 'my-agent' created at my-agent/</span><br>
-        <span class="prompt">$</span> <span class="cmd">cd my-agent && python my-agent.py</span><br>
-        <span class="output">✅ Agent started with 2 module(s)</span><br>
-        <span class="output">💓 memory: healthy | pilot: T1, 3 guardrails</span>
+        <span class="output">🔩 Agent 'my-agent' created — ready to run.</span>
       </div>
     </div>
 
