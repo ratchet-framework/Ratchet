@@ -31,8 +31,8 @@ Ratchet is modular. Install what you need:
 | **[ratchet-memory](packages/ratchet-memory/)** | Fact extraction, retrieval, lifecycle, embeddings | ✅ Ready |
 | **[ratchet-pilot](packages/ratchet-pilot/)** | Self-improvement engine: backlog, incidents, trust tiers | ✅ Ready |
 | **[ratchet-factory](packages/ratchet-factory/)** | CLI scaffolding for agents and modules | ✅ Ready |
-| **ratchet-research** | Deep research with vector DB storage | 🔜 Planned |
-| **ratchet-ops** | Business process automation | 🔜 Planned |
+| **ratchet-research** | Deep research with vector DB storage | ✅ Ready |
+| **ratchet-ops** | Business process automation | ✅ Ready |
 
 ### Create a new module
 ```bash
