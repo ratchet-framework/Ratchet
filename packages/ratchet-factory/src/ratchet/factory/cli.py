@@ -1,9 +1,10 @@
-"""ratchet CLI — scaffold, generate, and manage agents and modules.
+"""ratchet CLI — scaffold, generate, setup, and manage agents and modules.
 
 Usage:
     ratchet init <name>
     ratchet new module <name>
-    ratchet generate module "<description>" [--name <n>] [--no-test] [--no-review]
+    ratchet generate module "<description>"
+    ratchet setup openclaw [--workspace <path>]
     ratchet --help
 """
 
@@ -47,6 +48,15 @@ def main():
     gen_mod_parser.add_argument("--no-review", action="store_true", help="Skip code review")
     gen_mod_parser.add_argument("--force", action="store_true", help="Accept even if tests fail")
 
+    # ratchet setup <platform>
+    setup_parser = sub.add_parser("setup", help="Wire Ratchet into an existing agent platform")
+    setup_sub = setup_parser.add_subparsers(dest="platform")
+
+    oc_parser = setup_sub.add_parser("openclaw", help="Set up Ratchet in an OpenClaw workspace")
+    oc_parser.add_argument("--workspace", default=None, help="OpenClaw workspace path (auto-detect if not set)")
+    oc_parser.add_argument("--force", action="store_true", help="Overwrite existing config files")
+    oc_parser.add_argument("--no-wrappers", action="store_true", help="Skip bin/ wrapper installation")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -88,6 +98,57 @@ def main():
             gen_parser.print_help()
             sys.exit(1)
 
+    elif args.command == "setup":
+        if args.platform == "openclaw":
+            _handle_setup_openclaw(args)
+        else:
+            setup_parser.print_help()
+            sys.exit(1)
+
+
+def _handle_setup_openclaw(args):
+    """Handle: ratchet setup openclaw"""
+    from ratchet.factory.setup import setup_openclaw
+
+    print("\n🔩 Setting up Ratchet in OpenClaw workspace...\n")
+
+    try:
+        results = setup_openclaw(
+            workspace=args.workspace,
+            skip_existing=not args.force,
+            install_wrappers=not args.no_wrappers,
+        )
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"  Workspace: {results['workspace']}")
+    print()
+
+    if results["created"]:
+        print(f"  Created ({len(results['created'])}):")
+        for f in results["created"]:
+            print(f"    + {f}")
+
+    if results["skipped"]:
+        print(f"\n  Skipped ({len(results['skipped'])}):")
+        for f in results["skipped"]:
+            print(f"    - {f}")
+
+    if results["wrappers"]:
+        print(f"\n  Wrappers installed: {results['wrappers']}")
+        print(f"  Old scripts backed up as *.pre-ratchet")
+
+    print(f"\n✅ Ratchet is wired into OpenClaw.\n")
+    print("  Available commands:")
+    print("    python3 bin/memory-extract       # Extract facts from session")
+    print("    python3 bin/memory-retrieve      # Retrieve relevant facts")
+    print("    python3 bin/trust-check --summary  # Check trust tier")
+    print("    python3 bin/preflight-check 'action'  # Guardrail check")
+    print("    python3 bin/research 'question'   # Deep research")
+    print("    python3 bin/cost-report           # API cost summary")
+    print()
+
 
 def _handle_generate_module(args):
     """Handle: ratchet generate module '<description>'"""
@@ -120,7 +181,7 @@ def _handle_generate_module(args):
         print(f"\n   (dry run — no files written)")
         return
 
-    # --- Layer 3: Quality Check ---
+    # Layer 3: Quality Check
     run_tests = not args.no_test
     run_review = not args.no_review
 
@@ -129,76 +190,47 @@ def _handle_generate_module(args):
 
         print(f"\n🔍 Running quality checks...")
         report = quality_check(
-            module_code=code,
-            class_name=class_name,
-            module_name=module_name,
-            model=args.model,
-            skip_tests=not run_tests,
-            skip_review=not run_review,
+            module_code=code, class_name=class_name, module_name=module_name,
+            model=args.model, skip_tests=not run_tests, skip_review=not run_review,
         )
 
-        # Report test results
         if run_tests:
             tr = report.test_result
             if tr.passed:
                 print(f"   ✅ Tests: {tr.tests_run} passed")
             else:
                 print(f"   ❌ Tests: FAILED")
-                if tr.output:
-                    # Show last 15 lines of output
-                    lines = tr.output.strip().splitlines()
-                    for line in lines[-15:]:
-                        print(f"      {line}")
+                for line in tr.output.strip().splitlines()[-15:]:
+                    print(f"      {line}")
 
-        # Report review results
         if run_review:
             rv = report.review_result
             icon = {"pass": "✅", "warn": "⚠️", "fail": "❌"}.get(rv.verdict, "?")
             print(f"   {icon} Review: {rv.verdict.upper()} — {rv.summary}")
             if rv.bugs:
-                print(f"      Bugs: {len(rv.bugs)}")
                 for b in rv.bugs:
                     print(f"        - {b}")
-            if rv.security:
-                print(f"      Security: {len(rv.security)}")
-                for s in rv.security:
-                    print(f"        - {s}")
 
-        # Decide whether to proceed
         if not report.passed and not args.force:
             print(f"\n   Quality check {report.verdict.upper()}. Use --force to accept anyway.")
             sys.exit(1)
-        elif not report.passed and args.force:
-            print(f"\n   Quality check {report.verdict.upper()} — proceeding anyway (--force).")
 
-    # --- Scaffold and write ---
+    # Scaffold and write
     from ratchet.factory.scaffold import scaffold_module, _slugify
-
     slug = _slugify(args.mod_name or module_name)
 
     try:
-        path = scaffold_module(
-            name=slug,
-            description=args.description[:100],
-            target_dir=args.dir,
-        )
+        path = scaffold_module(name=slug, description=args.description[:100], target_dir=args.dir)
     except FileExistsError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
     module_dir = slug.replace("-", "_")
-    module_path = path / "src" / "ratchet" / module_dir / "module.py"
-    module_path.write_text(code, encoding="utf-8")
-
-    init_path = path / "src" / "ratchet" / module_dir / "__init__.py"
+    (path / "src" / "ratchet" / module_dir / "module.py").write_text(code, encoding="utf-8")
     init_content = f'"""{args.description[:100]}"""\n\nfrom ratchet.{module_dir}.module import {class_name}\n\n__all__ = ["{class_name}"]\n'
-    init_path.write_text(init_content, encoding="utf-8")
+    (path / "src" / "ratchet" / module_dir / "__init__.py").write_text(init_content, encoding="utf-8")
 
     print(f"\n🔩 Module 'ratchet-{slug}' generated at {path}/\n")
-    print(f"  Next steps:")
-    print(f"    pip install -e {path}")
-    print(f"    from ratchet.{module_dir} import {class_name}")
-    print()
 
 
 if __name__ == "__main__":
